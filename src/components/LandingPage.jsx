@@ -78,34 +78,6 @@ export default function LandingPage({ onViewChange }) {
 
   return (
     <>
-      {/* ========== NAVBAR ========== */}
-      <nav className="navbar scrolled">
-        <div className="nav-container">
-          <div className="nav-logo" onClick={() => onViewChange('landing')}>
-            <div className="logo-icon">
-              <svg viewBox="0 0 40 40" fill="none">
-                <circle cx="20" cy="20" r="18" stroke="url(#lg1)" strokeWidth="2"/>
-                <path d="M12 20 Q16 10 20 20 Q24 30 28 20" stroke="url(#lg1)" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
-                <circle cx="20" cy="20" r="3" fill="url(#lg1)"/>
-                <defs>
-                  <linearGradient id="lg1" x1="0" y1="0" x2="40" y2="40">
-                    <stop stopColor="#6C63FF"/>
-                    <stop offset="1" stopColor="#00D4AA"/>
-                  </linearGradient>
-                </defs>
-              </svg>
-            </div>
-            <span className="logo-text">مدى السمع</span>
-          </div>
-          <div className="nav-links">
-            <a href="#features" className="nav-link">المميزات</a>
-            <a href="#how" className="nav-link">كيف يعمل</a>
-            <a href="#platforms" className="nav-link">المنصات</a>
-            <button onClick={() => onViewChange('dashboard')} className="nav-btn">لوحة التحكم</button>
-          </div>
-        </div>
-      </nav>
-
       {/* ========== HERO ========== */}
       <section className="hero" id="hero">
         <div className="hero-bg">
@@ -409,14 +381,6 @@ export default function LandingPage({ onViewChange }) {
           </div>
         </div>
       </section>
-
-      {/* ========== FOOTER ========== */}
-      <footer className="footer">
-        <div className="container">
-          <p className="footer-tagline">مشروع مقدّم لجائزة مدى للابتكار 2026 — قطر</p>
-          <p className="footer-copy">صُنع بـ ❤️ من شخص يفهم الحاجة حقاً</p>
-        </div>
-      </footer>
     </>
   );
 }
