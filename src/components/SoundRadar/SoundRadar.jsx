@@ -19,10 +19,15 @@ export default function SoundRadar() {
   const analyserRef = useRef(null);
   const animFrameRef = useRef(null);
   const radarCanvasRef = useRef(null);
+  const lastAlertTimeRef = useRef(0);
 
-  // Trigger Multi-sensory Alert
+  // Trigger Multi-sensory Alert with 3.5s cooldown
   const triggerAlert = (type, title, db, icon) => {
-    const alertObj = { id: Date.now(), type, title, time: 'الآن', db, icon };
+    const now = Date.now();
+    if (now - lastAlertTimeRef.current < 3500) return;
+    lastAlertTimeRef.current = now;
+
+    const alertObj = { id: now, type, title, time: 'الآن', db, icon };
     setActiveAlert(alertObj);
     setAlertsLog(prev => [alertObj, ...prev.slice(0, 19)]);
 

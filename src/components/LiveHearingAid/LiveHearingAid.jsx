@@ -45,6 +45,13 @@ export default function LiveHearingAid({ userAudiogram }) {
       });
       setEqGains(compensation);
       setSelectedPreset('custom');
+      if (filtersRef.current && filtersRef.current.length === 6 && audioCtxRef.current) {
+        compensation.forEach((gainVal, idx) => {
+          if (filtersRef.current[idx]) {
+            filtersRef.current[idx].gain.setTargetAtTime(gainVal, audioCtxRef.current.currentTime, 0.05);
+          }
+        });
+      }
     }
   }, [userAudiogram]);
 

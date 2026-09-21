@@ -473,7 +473,7 @@ export default function HearingTest({ onProfileGenerated, onApplyToAid }) {
           </div>
 
           <div className="tone-pulse-indicator">
-            <div className={`pulse-circle ${isTonePlaying ? 'pulsing' : ''}`}>
+            <div className={`pulse-circle ${isPlaying ? 'pulsing' : ''}`}>
               <Volume2 className="w-12 h-12 text-white" />
             </div>
             <p className="pulse-instruction">

@@ -26,6 +26,22 @@ export default function MadaBrowser() {
   const [dspBoostActive, setDspBoostActive] = useState(true);
   const [captionsActive, setCaptionsActive] = useState(true);
   const [urlInput, setUrlInput] = useState('https://youtube.com/watch?v=education_mada');
+  const [captionIndex, setCaptionIndex] = useState(0);
+
+  const dynamicCaptions = [
+    activeMedia.caption,
+    '“...نظام مدى السمع يوفر طبقة وصول عائمة تعمل فوق أي مشغل فيديو أو مكالمة تفاعلية...”',
+    '“...تعويض الترددات الناقصة يتم في الزمن الحقيقي بدون أي تأخير ملحوظ في الصوت...”',
+    '“...يضمن هذا الحل تكافؤ الفرص التعليمية للطلاب الصم وضعاف السمع في كل المحاضرات...”'
+  ];
+
+  useEffect(() => {
+    if (!isPlaying) return;
+    const interval = setInterval(() => {
+      setCaptionIndex(prev => (prev + 1) % dynamicCaptions.length);
+    }, 3200);
+    return () => clearInterval(interval);
+  }, [isPlaying]);
 
   return (
     <div className="mada-browser-card">
@@ -74,7 +90,7 @@ export default function MadaBrowser() {
                   <span className="live-dot-green"></span>
                   ترجمة فورية متزامنة
                 </div>
-                <p className="caption-live-text">{activeMedia.caption}</p>
+                <p className="caption-live-text">{dynamicCaptions[captionIndex]}</p>
               </div>
             )}
           </div>
