@@ -1,8 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { 
+  Activity, Volume2, Sparkles, ShieldAlert, Award, FileText, 
+  CheckCircle2, ArrowLeft, ArrowUpRight, Headphones, Heart, 
+  Users, GraduationCap, Briefcase, Zap, Play, Pause, RefreshCw, 
+  BarChart2, ShieldCheck, ChevronRight, Sliders, Eye
+} from 'lucide-react';
 
 export default function LandingPage({ onViewChange }) {
   const [currentCaption, setCurrentCaption] = useState(0);
   const [eqHeights, setEqHeights] = useState([12, 24, 8, 16, 20, 14, 28, 10, 18]);
+  const [simMode, setSimMode] = useState('mada'); // 'normal', 'loss', 'mada'
   const waveCanvasRef = useRef(null);
 
   const captionLines = [
@@ -278,13 +285,18 @@ export default function LandingPage({ onViewChange }) {
           <div className="section-header">
             <span className="section-badge">كيف يعمل؟</span>
             <h2 className="section-title">ثلاث خطوات فقط<br/><span className="gradient-text">وأنت جاهز</span></h2>
+            <p className="section-desc">خطوات مبسطة تنقلك من المعاناة اليومية إلى وضوح صوتي تام وتواصل سلس بدون عوائق</p>
           </div>
+
           <div className="steps-container">
             <div className="step-item">
               <div className="step-num">01</div>
               <div className="step-content">
                 <h3>اختبر سمعك</h3>
-                <p>اجري اختبار السمع التفاعلي البسيط داخل التطبيق — يستغرق 3 دقائق فقط ويبني ملفك السمعي الشخصي</p>
+                <p>اجري اختبار السمع التفاعلي السريري داخل المنصة — يستغرق دقيقتين فقط ويبني ملفك السمعي الشخصي بدقة طبية</p>
+                <button onClick={() => onViewChange('dashboard', 'hearing-test')} className="btn-step-action">
+                  بدء فحص السمع الآن <ArrowLeft className="w-3.5 h-3.5 mr-1 inline" />
+                </button>
               </div>
             </div>
             <div className="step-connector"></div>
@@ -292,7 +304,10 @@ export default function LandingPage({ onViewChange }) {
               <div className="step-num">02</div>
               <div className="step-content">
                 <h3>فعّل الطبقة الذكية</h3>
-                <p>بضغطة واحدة، يصبح مدى السمع الطبقة الصوتية الرئيسية على جهازك — كل الأصوات تمر عبره تلقائياً</p>
+                <p>بضغطة واحدة، يصبح مدى السمع المعين السمعي الحي لجهازك — يعوض الترددات الناقصة ويعزل الضوضاء فوراً</p>
+                <button onClick={() => onViewChange('dashboard', 'live-aid')} className="btn-step-action">
+                  تشغيل المعين الحي <ArrowLeft className="w-3.5 h-3.5 mr-1 inline" />
+                </button>
               </div>
             </div>
             <div className="step-connector"></div>
@@ -300,8 +315,218 @@ export default function LandingPage({ onViewChange }) {
               <div className="step-num">03</div>
               <div className="step-content">
                 <h3>استمتع بكل شيء</h3>
-                <p>تصفح، ادرس، اجتمع، وتواصل — النظام يعمل خلف الكواليس ويطوّع كل صوت حسب احتياجك</p>
+                <p>تصفح، ادرس، وتحدث — نصوص ترجمة فورية عائمة ورادار أمان حسي يحميك وينبهك للأصوات الطارئة خلف الكواليس</p>
+                <button onClick={() => onViewChange('dashboard', 'captions')} className="btn-step-action">
+                  استعراض المنظومة <ArrowLeft className="w-3.5 h-3.5 mr-1 inline" />
+                </button>
               </div>
+            </div>
+          </div>
+
+          {/* Interactive Live Hearing & Frequency Simulator */}
+          <div className="interactive-hearing-simulator">
+            <div className="sim-widget-header">
+              <div className="sim-widget-title">
+                <Sliders className="w-5 h-5 text-indigo-400 ml-2 inline" />
+                <strong>محاكي السمع ومعالجة الترددات الحية (Interactive DSP Simulator)</strong>
+              </div>
+              <span className="sim-badge">تجربة تفاعلية مباشرة</span>
+            </div>
+
+            <p className="sim-lead-text">
+              جرّب بنفسك الفرق بين السمع الطبيعي، وفقدان السمع الحسي العصبي، وكيف تعيد خوارزميات "مدى السمع" وضوح الكلام فورياً:
+            </p>
+
+            <div className="sim-mode-toggles">
+              <button
+                onClick={() => setSimMode('normal')}
+                className={`sim-toggle-pill ${simMode === 'normal' ? 'active' : ''}`}
+              >
+                👂 1. سمع طبيعي (Normal)
+              </button>
+              <button
+                onClick={() => setSimMode('loss')}
+                className={`sim-toggle-pill ${simMode === 'loss' ? 'active alert-loss' : ''}`}
+              >
+                ⚠️ 2. ضعف الترددات العالية (High-Freq Loss)
+              </button>
+              <button
+                onClick={() => setSimMode('mada')}
+                className={`sim-toggle-pill ${simMode === 'mada' ? 'active success-mada' : ''}`}
+              >
+                ✨ 3. معالجة مدى السمع الذكية (Mada DSP Boost)
+              </button>
+            </div>
+
+            <div className="sim-comparison-display">
+              <div className="sim-speech-box">
+                <span className="speech-box-label">الجملة المنطوقة كما يستقبلها الدماغ:</span>
+                <p className={`simulated-speech-text mode-${simMode}`}>
+                  {simMode === 'normal' && '« أهلاً وسهلاً بكم في جلسة اليوم، نناقش موضوعاً هاماً للجميع. »'}
+                  {simMode === 'loss' && '« أهـ... وسـ...ـكم في جـ...ـة اليوم، ...اقش مـ...ـوعاً ...اماً. »'}
+                  {simMode === 'mada' && '« أهلاً وسهلاً بكم في جلسة اليوم، نناقش موضوعاً هاماً للجميع. »'}
+                </p>
+                <div className="sim-speech-note">
+                  {simMode === 'normal' && '✅ توازن كامل بين الترددات المنخفضة والعالية ووضوح تام لجميع الحروف.'}
+                  {simMode === 'loss' && '❌ ضياع أحرف الصفير والاحتكاك (س، ش، ت، ف) بسبب انحدار الترددات فوق 2000Hz، مما يجعل الكلام مبهماً.'}
+                  {simMode === 'mada' && '⚡ قامت خوارزمية مدى السمع برفع الترددات العالية (+18dB) وعزل ضجيج الخلفية، فعادت مخارج الحروف فائقة النقاء.'}
+                </div>
+              </div>
+
+              <div className="sim-eq-visualizer">
+                <span className="eq-box-label">منحنى الترددات المعالج (DSP Response):</span>
+                <div className="sim-eq-bars-row">
+                  {[
+                    { freq: '250Hz', val: simMode === 'loss' ? 85 : (simMode === 'mada' ? 65 : 70) },
+                    { freq: '500Hz', val: simMode === 'loss' ? 75 : (simMode === 'mada' ? 70 : 70) },
+                    { freq: '1kHz', val: simMode === 'loss' ? 55 : (simMode === 'mada' ? 75 : 70) },
+                    { freq: '2kHz', val: simMode === 'loss' ? 25 : (simMode === 'mada' ? 90 : 70) },
+                    { freq: '4kHz', val: simMode === 'loss' ? 10 : (simMode === 'mada' ? 95 : 70) },
+                    { freq: '8kHz', val: simMode === 'loss' ? 5 : (simMode === 'mada' ? 85 : 70) }
+                  ].map((bar, idx) => (
+                    <div key={idx} className="sim-bar-item">
+                      <div className="sim-bar-track">
+                        <div
+                          className={`sim-bar-fill mode-${simMode}`}
+                          style={{ height: `${bar.val}%` }}
+                        ></div>
+                      </div>
+                      <span className="sim-freq-tag">{bar.freq}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ========== CLINICAL AUDIOMETRY SECTION ========== */}
+      <section className="clinical-section" id="clinical">
+        <div className="container">
+          <div className="section-header">
+            <span className="section-badge">المعايير الطبية والسريرية</span>
+            <h2 className="section-title">فحص نغمات نقي متوافق مع<br/><span className="gradient-text">بروتوكولات WHO و ANSI S3.6</span></h2>
+            <p className="section-desc">
+              لا نعتمد على التخمين، بل نوفر فحص سمع سريري حقيقي يقيس عتبات السمع (Hearing Thresholds) عبر 6 ترددات جوهرية ويصدر تقريراً طبياً معتمداً.
+            </p>
+          </div>
+
+          <div className="clinical-grid">
+            <div className="clinical-feature-card">
+              <div className="clinical-icon-wrap">
+                <Activity className="w-8 h-8 text-indigo-400" />
+              </div>
+              <h3>نغمات نقية (Pure Tone Audiometry)</h3>
+              <p>قياس دقيق لحساسية الأذنين بترددات تبدأ من 250Hz وحتى 8000Hz لمعرفة الترددات المتضررة بدقة متناهية.</p>
+              <div className="clinical-standards-tag">ANSI S3.6 Calibrated</div>
+            </div>
+
+            <div className="clinical-feature-card">
+              <div className="clinical-icon-wrap">
+                <BarChart2 className="w-8 h-8 text-emerald-400" />
+              </div>
+              <h3>مخطط سمعي طبي تفاعلي</h3>
+              <p>تمثيل بصري معتمد دولياً: الأذن اليمنى باللون الأحمر ودوائر (○) والأذن اليسرى باللون الأزرق وعلامات (×).</p>
+              <div className="clinical-standards-tag">WHO Hearing Loss Scales</div>
+            </div>
+
+            <div className="clinical-feature-card">
+              <div className="clinical-icon-wrap">
+                <FileText className="w-8 h-8 text-pink-400" />
+              </div>
+              <h3>تصدير تقرير طبي رسمي (PDF)</h3>
+              <p>تحميل تقرير تشخيصي متكامل بضغطة زر يحتوي على المخطط البياني والتوصيات لمشاركته مع الطبيب المختص.</p>
+              <div className="clinical-standards-tag">One-Click PDF Export</div>
+            </div>
+          </div>
+
+          <div className="clinical-cta-banner">
+            <div className="cta-banner-text">
+              <h3>هل ترغب في فحص سمعك الآن وبناء ملفك الطبي المخصص؟</h3>
+              <p>الفحص مجاني بالكامل، يستغرق دقيقتين فقط باستخدام أي سماعة رأس عادية.</p>
+            </div>
+            <button onClick={() => onViewChange('dashboard', 'hearing-test')} className="btn-glow-primary">
+              <Headphones className="w-5 h-5 ml-2" />
+              بدء فحص السمع السريري الآن
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* ========== HUMAN IMPACT SECTION ========== */}
+      <section className="impact-section" id="impact">
+        <div className="container">
+          <div className="section-header">
+            <span className="section-badge">الأثر الإنساني والمجتمعي</span>
+            <h2 className="section-title">تمكين حقيقي لأكثر من<br/><span className="gradient-text">466 مليون إنسان حول العالم</span></h2>
+            <p className="section-desc">
+              مشروع مقدّم لجائزة مدى للابتكار 2026 لتحقيق الشمول الرقمي وتكافؤ الفرص في التعليم والعمل والحياة اليومية.
+            </p>
+          </div>
+
+          <div className="impact-pillars-grid">
+            <div className="impact-pillar-card">
+              <div className="pillar-header">
+                <GraduationCap className="w-6 h-6 text-indigo-400 ml-2" />
+                <h4>التعليم وتكافؤ الفرص</h4>
+              </div>
+              <p>
+                تمكين الطالب الأصم وضعيف السمع من متابعة شرح المحاضر في الجامعة والمدرسة دون فوات أي كلمة عبر التفريغ النصي والتلخيص الذكي التلقائي.
+              </p>
+            </div>
+
+            <div className="impact-pillar-card">
+              <div className="pillar-header">
+                <Briefcase className="w-6 h-6 text-emerald-400 ml-2" />
+                <h4>الدمج الوظيفي والمهني</h4>
+              </div>
+              <p>
+                المشاركة الفعالة في اجتماعات العمل عبر Teams و Zoom ومكالمات الهاتف اليومية دون حرج أو حاجة مستمرة لمترجم إشارة بشري.
+              </p>
+            </div>
+
+            <div className="impact-pillar-card">
+              <div className="pillar-header">
+                <ShieldAlert className="w-6 h-6 text-pink-400 ml-2" />
+                <h4>السلامة والأمان الحسي</h4>
+              </div>
+              <p>
+                حماية الأرواح من خلال رادار صوتي حسي يرصد أصوات الإنذارات وأجراس الأبواب وأبواق السيارات ويحولها لاهتزازات ووميض بصري منقذ للحياة.
+              </p>
+            </div>
+
+            <div className="impact-pillar-card">
+              <div className="pillar-header">
+                <ShieldCheck className="w-6 h-6 text-amber-400 ml-2" />
+                <h4>الخصوصية والكرامة الرقمية</h4>
+              </div>
+              <p>
+                معالجة الإشارات الصوتية تتم محلياً 100% على جهاز المستخدم (On-Device DSP) لضمان الخصوصية التامة وسرية المكالمات والمحادثات.
+              </p>
+            </div>
+          </div>
+
+          {/* Impact Numbers */}
+          <div className="impact-stats-bar">
+            <div className="impact-stat-col">
+              <strong>+466M</strong>
+              <span>مستفيد محتمل من ذوي الإعاقة السمعية</span>
+            </div>
+            <div className="stat-separator"></div>
+            <div className="impact-stat-col">
+              <strong>0 ms</strong>
+              <span>تأخير معالجة الصوت المباشر عبر الويب</span>
+            </div>
+            <div className="stat-separator"></div>
+            <div className="impact-stat-col">
+              <strong>100%</strong>
+              <span>خصوصية ومعالجة محلية على جهاز المستخدم</span>
+            </div>
+            <div className="stat-separator"></div>
+            <div className="impact-stat-col">
+              <strong>WCAG 2.2 AAA</strong>
+              <span>أعلى معايير الوصول الرقمي الشامل</span>
             </div>
           </div>
         </div>

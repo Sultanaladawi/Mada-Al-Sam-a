@@ -339,25 +339,25 @@ export default function LiveHearingAid({ userAudiogram }) {
         <div className="preset-buttons">
           <button
             onClick={() => applyPreset('conversation')}
-            className={`preset-btn ${activePreset === 'conversation' ? 'active' : ''}`}
+            className={`preset-btn ${selectedPreset === 'conversation' ? 'active' : ''}`}
           >
             💬 محادثة هادئة
           </button>
           <button
             onClick={() => applyPreset('noisy')}
-            className={`preset-btn ${activePreset === 'noisy' ? 'active' : ''}`}
+            className={`preset-btn ${selectedPreset === 'noisy' ? 'active' : ''}`}
           >
             ☕ مقهى وشارع صاخب
           </button>
           <button
             onClick={() => applyPreset('lecture')}
-            className={`preset-btn ${activePreset === 'lecture' ? 'active' : ''}`}
+            className={`preset-btn ${selectedPreset === 'lecture' ? 'active' : ''}`}
           >
             🎓 محاضرة واجتماع
           </button>
           <button
             onClick={() => applyPreset('custom')}
-            className={`preset-btn ${activePreset === 'custom' ? 'active' : ''}`}
+            className={`preset-btn ${selectedPreset === 'custom' ? 'active' : ''}`}
           >
             ✨ مخصص حسب فحصك السمعي
           </button>

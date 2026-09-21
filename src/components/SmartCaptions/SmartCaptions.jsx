@@ -130,7 +130,7 @@ export default function SmartCaptions({ isFloating, onToggleFloating }) {
   };
 
   const copyTranscript = () => {
-    const fullText = history.map(h => [] ).join('\n');
+    const fullText = history.map(h => `[${h.time}] ${h.text}`).join('\n');
     navigator.clipboard.writeText(fullText);
     alert('تم نسخ كامل نص المحادثة إلى الحافظة بنجاح! 📋');
   };
@@ -235,7 +235,7 @@ export default function SmartCaptions({ isFloating, onToggleFloating }) {
           )}
         </button>
 
-        <div className={`emotion-display-pill emotion-${currentEmotion.id}`}>
+        <div className={`emotion-display-pill emotion-${currentEmotion.type || 'neutral'}`}>
           <span className="emotion-emoji">{currentEmotion.emoji}</span>
           <span className="emotion-label">نبرة المتحدث: <strong>{currentEmotion.label}</strong></span>
         </div>

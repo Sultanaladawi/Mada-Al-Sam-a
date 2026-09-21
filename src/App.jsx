@@ -9,6 +9,29 @@ function App() {
   const [activeTab, setActiveTab] = useState('overview');
   const [highContrast, setHighContrast] = useState(false);
 
+  useEffect(() => {
+    const handleHash = () => {
+      const hash = window.location.hash;
+      if (hash) {
+        const id = hash.replace('#', '');
+        setView(prev => {
+          if (prev !== 'landing') return 'landing';
+          return prev;
+        });
+        setTimeout(() => {
+          const el = document.getElementById(id);
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth' });
+          }
+        }, 150);
+      }
+    };
+
+    handleHash();
+    window.addEventListener('hashchange', handleHash);
+    return () => window.removeEventListener('hashchange', handleHash);
+  }, []);
+
   const handleTabChange = (tab) => {
     setActiveTab(tab);
     if (view !== 'dashboard') {
