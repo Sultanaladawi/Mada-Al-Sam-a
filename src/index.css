@@ -3876,6 +3876,7 @@ body {
 @media (max-width: 768px) {
   .hidden-mobile { display: none; }
   .navbar-dashboard-tabs { display: none; }
+  .navbar-landing-links { display: none; }
 }
 
 /* ===== ENHANCED HOW IT WORKS & SIMULATOR ===== */
