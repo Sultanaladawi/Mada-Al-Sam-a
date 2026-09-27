@@ -1,5 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Mic, MicOff, Maximize2, Minimize2, Copy, Trash2, Smile, HelpCircle, AlertCircle, Type, Sparkles, Volume2 } from 'lucide-react';
+import { 
+  Mic, MicOff, Maximize2, Minimize2, Copy, Trash2, Smile, HelpCircle, 
+  AlertCircle, Type, Sparkles, Volume2, Download, Play, Check, FileText 
+} from 'lucide-react';
+import { jsPDF } from 'jspdf';
+
+const DEMO_CONVERSATION = [
+  { text: 'أهلاً بكم في جلسة اليوم لمنظومة مدى السمع.', emotion: 'happy' },
+  { text: 'هل يمكن توضيح كيفية تعويض الترددات السمعية بدقة؟', emotion: 'question' },
+  { text: 'بكل تأكيد، النظام يعتمد على مصفوفة فلاتر رقمية DSP تعوض الفقدان السمعي فورياً.', emotion: 'neutral' },
+  { text: 'شكراً جزيلاً، التوضيح ممتاز ورائع ومفيد جداً!', emotion: 'happy' },
+  { text: 'انتبهوا! هناك تنبيه طارئ من رادار الأمان في الممر الخارجي!', emotion: 'urgent' }
+];
 
 export default function SmartCaptions({ isFloating, onToggleFloating }) {
   const [isListening, setIsListening] = useState(false);
@@ -13,13 +25,14 @@ export default function SmartCaptions({ isFloating, onToggleFloating }) {
   const [fontSize, setFontSize] = useState('large'); // 'normal', 'large', 'xlarge'
   const [highContrast, setHighContrast] = useState(false);
   const [currentEmotion, setCurrentEmotion] = useState({ label: 'هادئ ومتزن', emoji: '😊', type: 'happy' });
+  const [isDemoRunning, setIsDemoRunning] = useState(false);
 
   const recognitionRef = useRef(null);
 
   // Analyze simple tone/emotion from text
   const analyzeEmotion = (text) => {
     if (!text) return { label: 'هادئ ومتزن', emoji: '😊', type: 'happy' };
-    const happyWords = ['شكرا', 'ممتاز', 'رائع', 'جميل', 'سعيد', 'أهلا', 'مرحبا', 'فخور', 'إنجاز', 'مبروك'];
+    const happyWords = ['شكرا', 'ممتاز', 'رائع', 'جميل', 'سعيد', 'أهلا', 'مرحبا', 'فخور', 'إنجاز', 'مبروك', 'تأكيد'];
     const questionWords = ['هل', 'كيف', 'ماذا', 'لماذا', 'أين', 'متى', 'كم', 'مين', 'شو', 'وين', '?'];
     const urgentWords = ['انتبه', 'احذر', 'خطر', 'طوارئ', 'بسرعة', 'مهم', 'ضروري', 'حريق', 'توقف'];
 
@@ -56,7 +69,7 @@ export default function SmartCaptions({ isFloating, onToggleFloating }) {
       const recognition = new SpeechRecognition();
       recognition.continuous = true;
       recognition.interimResults = true;
-      recognition.lang = 'ar-JO'; // Arabic Jordan / Levant dialect, falls back to MSA
+      recognition.lang = 'ar-JO';
 
       recognition.onstart = () => {
         setIsListening(true);
@@ -104,7 +117,6 @@ export default function SmartCaptions({ isFloating, onToggleFloating }) {
       };
 
       recognition.onend = () => {
-        // Automatically restart if user hasn't explicitly stopped it
         if (isListening) {
           try { recognition.start(); } catch (e) {}
         }
@@ -112,6 +124,7 @@ export default function SmartCaptions({ isFloating, onToggleFloating }) {
 
       recognition.start();
       recognitionRef.current = recognition;
+      setIsListening(true);
     } catch (err) {
       console.error('Failed to init speech recognition:', err);
       setIsListening(false);
@@ -129,6 +142,35 @@ export default function SmartCaptions({ isFloating, onToggleFloating }) {
     setInterimText('');
   };
 
+  // Run interactive demo simulation for evaluators/judges
+  const runSmartDialogueDemo = () => {
+    if (isDemoRunning) return;
+    setIsDemoRunning(true);
+    let step = 0;
+
+    const interval = setInterval(() => {
+      if (step >= DEMO_CONVERSATION.length) {
+        clearInterval(interval);
+        setIsDemoRunning(false);
+        return;
+      }
+
+      const item = DEMO_CONVERSATION[step];
+      const emotionMeta = analyzeEmotion(item.text);
+      setCurrentEmotion(emotionMeta);
+      setHistory(prev => [
+        {
+          id: Date.now() + step,
+          text: item.text,
+          time: new Date().toLocaleTimeString('ar-JO', { hour: '2-digit', minute: '2-digit' }),
+          emotion: item.emotion
+        },
+        ...prev
+      ]);
+      step++;
+    }, 1400);
+  };
+
   const copyTranscript = () => {
     const fullText = history.map(h => `[${h.time}] ${h.text}`).join('\n');
     navigator.clipboard.writeText(fullText);
@@ -140,6 +182,56 @@ export default function SmartCaptions({ isFloating, onToggleFloating }) {
       setHistory([]);
       setInterimText('');
     }
+  };
+
+  // Export Transcript to PDF
+  const exportCaptionsPDF = () => {
+    if (history.length === 0) {
+      alert('لا توجد نصوص في السجل لتصديرها.');
+      return;
+    }
+
+    const doc = new jsPDF();
+    doc.setFont('Helvetica', 'bold');
+    doc.setTextColor(30, 41, 59);
+
+    doc.setFontSize(20);
+    doc.text('Mada Al-Sam-a Meeting Transcript & Captions', 105, 22, { align: 'center' });
+
+    doc.setFontSize(11);
+    doc.setFont('Helvetica', 'normal');
+    doc.text(`Generated Date: ${new Date().toLocaleDateString('en-GB')} ${new Date().toLocaleTimeString('en-GB')}`, 105, 30, { align: 'center' });
+    doc.text('Real-time Speech Recognition with Tone Sentiment Analysis', 105, 36, { align: 'center' });
+
+    doc.setDrawColor(203, 213, 225);
+    doc.line(20, 42, 190, 42);
+
+    let y = 52;
+    doc.setFontSize(10);
+
+    const reversed = [...history].reverse();
+    reversed.forEach((entry, idx) => {
+      if (y > 270) {
+        doc.addPage();
+        y = 25;
+      }
+      doc.setFont('Helvetica', 'bold');
+      doc.setTextColor(79, 70, 229);
+      doc.text(`[${entry.time}] (Tone: ${entry.emotion})`, 22, y);
+      y += 6;
+
+      doc.setFont('Helvetica', 'normal');
+      doc.setTextColor(51, 65, 85);
+      const lines = doc.splitTextToSize(entry.text, 165);
+      doc.text(lines, 25, y);
+      y += (lines.length * 5) + 6;
+    });
+
+    doc.setFontSize(9);
+    doc.setTextColor(148, 163, 184);
+    doc.text('Mada Al-Sam-a Accessibility Platform - SAIF 2026', 105, 285, { align: 'center' });
+
+    doc.save(`Mada_Captions_${Date.now()}.pdf`);
   };
 
   useEffect(() => {
@@ -156,11 +248,27 @@ export default function SmartCaptions({ isFloating, onToggleFloating }) {
           <div className={`live-radar-dot ${isListening ? 'listening' : ''}`}></div>
           <div>
             <h3>التفريغ والترجمة الفورية الذكية (Live Smart Captions)</h3>
-            <p>طبقة نصوص عربية مباشرة مع كاشف نبرة المشاعر لتسهيل التواصل اليومي والمحاضرات.</p>
+            <p>طبقة نصوص عربية مباشرة مع كاشف نبرة المشاعر وتصدير السجل لتسهيل الاجتماعات والمحاضرات.</p>
           </div>
         </div>
 
         <div className="captions-actions">
+          {/* Demo Dialogue Trigger */}
+          <button
+            onClick={runSmartDialogueDemo}
+            disabled={isDemoRunning}
+            className={`btn-captions-demo ${isDemoRunning ? 'running' : ''}`}
+            title="تشغيل محاكاة محادثة ذكية جاهزة للمعاينة"
+          >
+            <Play className="w-3.5 h-3.5 ml-1 text-emerald-400" />
+            {isDemoRunning ? 'جارٍ المحاكاة...' : 'محاكاة حوار'}
+          </button>
+
+          {/* Export PDF */}
+          <button onClick={exportCaptionsPDF} className="btn-icon-toggle" title="تصدير السجل كـ PDF">
+            <Download className="w-4 h-4 text-indigo-400" />
+          </button>
+
           {/* Font Size Toggle */}
           <div className="font-size-cluster">
             <button
@@ -253,7 +361,7 @@ export default function SmartCaptions({ isFloating, onToggleFloating }) {
         {history.length === 0 && !interimText && (
           <div className="captions-empty-hint">
             <Volume2 className="w-10 h-10 text-slate-500 mb-2" />
-            <p>اضغط على زر الاستماع وابدأ الحديث، وستظهر النصوص باللغة العربية فوراً هنا.</p>
+            <p>اضغط على زر الاستماع وابدأ الحديث، أو اضغط "محاكاة حوار" لتجربة كاشف المشاعر والنصوص تلقائياً.</p>
           </div>
         )}
 
@@ -262,9 +370,10 @@ export default function SmartCaptions({ isFloating, onToggleFloating }) {
             <div className="bubble-meta">
               <span className="bubble-time">{item.time}</span>
               <span className="bubble-tag">
-                {item.emotion === 'urgent' && '⚠️ مهم'}
-                {item.emotion === 'question' && '❓ سؤال'}
-                {item.emotion === 'happy' && '😊 إيجابي'}
+                {item.emotion === 'urgent' && '⚠️ تنبيه مهم'}
+                {item.emotion === 'question' && '❓ سؤال / استفسار'}
+                {item.emotion === 'happy' && '😊 إيجابي وودود'}
+                {item.emotion === 'neutral' && '💬 كلام معتاد'}
               </span>
             </div>
             <p className="bubble-text">{item.text}</p>

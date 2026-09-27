@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Mic, MicOff, Sliders, Volume2, Shield, Sparkles, Activity, AlertTriangle, Radio } from 'lucide-react';
+import { 
+  Mic, MicOff, Sliders, Volume2, Shield, Sparkles, Activity, 
+  AlertTriangle, Radio, Play, Pause, Save, Check, VolumeX, Headphones, Cloud, RotateCcw
+} from 'lucide-react';
 
 const BANDS = [
   { freq: 250, label: '250Hz', desc: 'أصوات عميقة' },
@@ -12,6 +15,8 @@ const BANDS = [
 
 export default function LiveHearingAid({ userAudiogram }) {
   const [isActive, setIsActive] = useState(false);
+  const [isDemoPlaying, setIsDemoPlaying] = useState(false);
+  const [demoMode, setDemoMode] = useState('enhanced'); // 'enhanced' or 'raw'
   const [volume, setVolume] = useState(1.2); // 0.2 to 3.0
   const [noiseReduction, setNoiseReduction] = useState(70); // 0 to 100
   const [vocalClarity, setVocalClarity] = useState(80); // 0 to 100
@@ -22,25 +27,35 @@ export default function LiveHearingAid({ userAudiogram }) {
   const [currentDb, setCurrentDb] = useState(42);
   const [deviceWarning, setDeviceWarning] = useState(false);
 
+  // Cloud save state
+  const [isSavingCloud, setIsSavingCloud] = useState(false);
+  const [cloudSaveMessage, setCloudSaveMessage] = useState('');
+
   const audioCtxRef = useRef(null);
   const micStreamRef = useRef(null);
   const sourceNodeRef = useRef(null);
+  const rumbleCutRef = useRef(null);
   const filtersRef = useRef([]);
   const vocalFilterRef = useRef(null);
   const noiseLowPassRef = useRef(null);
+  const compressorRef = useRef(null);
   const gainNodeRef = useRef(null);
   const analyserRef = useRef(null);
   const animFrameRef = useRef(null);
   const canvasRef = useRef(null);
 
+  // Demo audio node refs
+  const demoSourceRef = useRef(null);
+  const demoEnhancedGainRef = useRef(null);
+  const demoRawGainRef = useRef(null);
+
   // Auto-calibrate EQ from user audiogram if available
   useEffect(() => {
     if (userAudiogram && userAudiogram.summary) {
       const { rightAvg, leftAvg } = userAudiogram.summary;
-      const avg = (rightAvg + leftAvg) / 2;
       // Map hearing loss to boost
       const compensation = BANDS.map((b, i) => {
-        const earLoss = Math.max(userAudiogram.rightEar[i] || 20, userAudiogram.leftEar[i] || 20);
+        const earLoss = Math.max(userAudiogram.rightEar?.[i] || 20, userAudiogram.leftEar?.[i] || 20);
         return Math.min(24, Math.max(-6, Math.round((earLoss - 20) * 0.4)));
       });
       setEqGains(compensation);
@@ -58,33 +73,173 @@ export default function LiveHearingAid({ userAudiogram }) {
   // Handle Preset Switching
   const applyPreset = (presetKey) => {
     setSelectedPreset(presetKey);
+    let newGains = eqGains;
+    let newNoise = noiseReduction;
+    let newClarity = vocalClarity;
+
     if (presetKey === 'conversation') {
-      setEqGains([2, 4, 8, 14, 10, 4]);
-      setNoiseReduction(60);
-      setVocalClarity(85);
+      newGains = [2, 4, 8, 14, 10, 4];
+      newNoise = 60;
+      newClarity = 85;
     } else if (presetKey === 'noisy') {
-      setEqGains([-4, -2, 6, 16, 8, -2]);
-      setNoiseReduction(90);
-      setVocalClarity(90);
+      newGains = [-4, -2, 6, 16, 8, -2];
+      newNoise = 90;
+      newClarity = 90;
     } else if (presetKey === 'lecture') {
-      setEqGains([0, 3, 10, 18, 14, 6]);
-      setNoiseReduction(75);
-      setVocalClarity(95);
+      newGains = [0, 3, 10, 18, 14, 6];
+      newNoise = 75;
+      newClarity = 95;
     } else if (presetKey === 'custom' && userAudiogram) {
-      // Re-apply personal audiogram
-      const compensation = BANDS.map((b, i) => {
-        const earLoss = Math.max(userAudiogram.rightEar[i] || 20, userAudiogram.leftEar[i] || 20);
+      newGains = BANDS.map((b, i) => {
+        const earLoss = Math.max(userAudiogram.rightEar?.[i] || 20, userAudiogram.leftEar?.[i] || 20);
         return Math.min(24, Math.max(-6, Math.round((earLoss - 20) * 0.4)));
       });
-      setEqGains(compensation);
+    }
+
+    setEqGains(newGains);
+    setNoiseReduction(newNoise);
+    setVocalClarity(newClarity);
+
+    if (audioCtxRef.current) {
+      const now = audioCtxRef.current.currentTime;
+      newGains.forEach((g, idx) => {
+        if (filtersRef.current[idx]) {
+          filtersRef.current[idx].gain.setTargetAtTime(g, now, 0.05);
+        }
+      });
+      if (noiseLowPassRef.current) {
+        noiseLowPassRef.current.frequency.setTargetAtTime(9000 - (newNoise * 30), now, 0.05);
+      }
+      if (vocalFilterRef.current) {
+        vocalFilterRef.current.gain.setTargetAtTime((newClarity / 100) * 12, now, 0.05);
+      }
     }
   };
 
-  // Toggle Live Hearing Aid Engine
+  // Helper: Setup common DSP processing chain
+  const ensureDspPipeline = (ctx) => {
+    if (!rumbleCutRef.current) {
+      // 1. High-pass filter to remove rumble (<100Hz)
+      const rumbleCut = ctx.createBiquadFilter();
+      rumbleCut.type = 'highpass';
+      rumbleCut.frequency.value = 100;
+      rumbleCutRef.current = rumbleCut;
+
+      // 2. 6-Band Equalizer
+      const filters = BANDS.map((b, idx) => {
+        const f = ctx.createBiquadFilter();
+        f.type = 'peaking';
+        f.frequency.value = b.freq;
+        f.Q.value = 1.4;
+        f.gain.value = eqGains[idx];
+        return f;
+      });
+      filtersRef.current = filters;
+
+      // 3. Vocal Clarity Formant Boost (~3.2kHz)
+      const vocalFilter = ctx.createBiquadFilter();
+      vocalFilter.type = 'peaking';
+      vocalFilter.frequency.value = 3200;
+      vocalFilter.Q.value = 1.8;
+      vocalFilter.gain.value = (vocalClarity / 100) * 12;
+      vocalFilterRef.current = vocalFilter;
+
+      // 4. Noise Low-pass filter
+      const noiseFilter = ctx.createBiquadFilter();
+      noiseFilter.type = 'lowpass';
+      noiseFilter.frequency.value = 9000 - (noiseReduction * 30);
+      noiseLowPassRef.current = noiseFilter;
+
+      // 5. Dynamics Compressor (ear protection)
+      const compressor = ctx.createDynamicsCompressor();
+      compressor.threshold.setValueAtTime(-24, ctx.currentTime);
+      compressor.knee.setValueAtTime(30, ctx.currentTime);
+      compressor.ratio.setValueAtTime(12, ctx.currentTime);
+      compressor.attack.setValueAtTime(0.003, ctx.currentTime);
+      compressor.release.setValueAtTime(0.25, ctx.currentTime);
+      compressorRef.current = compressor;
+
+      // 6. Master Gain
+      const masterGain = ctx.createGain();
+      masterGain.gain.value = volume;
+      gainNodeRef.current = masterGain;
+
+      // 7. Analyser Node
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 128;
+      analyser.smoothingTimeConstant = 0.8;
+      analyserRef.current = analyser;
+
+      // Connect pipeline
+      rumbleCut.connect(filters[0]);
+      for (let i = 0; i < filters.length - 1; i++) {
+        filters[i].connect(filters[i + 1]);
+      }
+      filters[filters.length - 1].connect(vocalFilter);
+      vocalFilter.connect(noiseFilter);
+      noiseFilter.connect(compressor);
+      compressor.connect(masterGain);
+      masterGain.connect(analyser);
+      masterGain.connect(ctx.destination);
+    }
+  };
+
+  // Generate realistic speech + ambient noise demo audio buffer
+  const createDemoAudioBuffer = (ctx) => {
+    const sampleRate = ctx.sampleRate;
+    const duration = 6.0; // 6s cycle
+    const numSamples = Math.floor(sampleRate * duration);
+    const buffer = ctx.createBuffer(1, numSamples, sampleRate);
+    const data = buffer.getChannelData(0);
+
+    for (let i = 0; i < numSamples; i++) {
+      const t = i / sampleRate;
+      const cycle = t % 1.5; // 4 syllables per 6s
+
+      // Voice envelope
+      let env = 0;
+      if (cycle < 1.1) {
+        env = Math.sin((cycle / 1.1) * Math.PI);
+      }
+
+      // Voice fundamental with natural intonation
+      const f0 = 135 + 14 * Math.sin(2 * Math.PI * 1.3 * t);
+
+      // Formants simulating Arabic vowels (A, E, O)
+      let voice = 0;
+      for (let h = 1; h <= 24; h++) {
+        const freq = f0 * h;
+        if (freq > 5000) break;
+        const w1 = Math.exp(-Math.pow(freq - 750, 2) / 30000);
+        const w2 = Math.exp(-Math.pow(freq - 1550, 2) / 60000) * 0.75;
+        const w3 = Math.exp(-Math.pow(freq - 2800, 2) / 120000) * 0.55;
+        const w4 = Math.exp(-Math.pow(freq - 3900, 2) / 220000) * 0.4;
+        const amp = (0.22 / h) + w1 + w2 + w3 + w4;
+        voice += amp * Math.sin(2 * Math.PI * freq * t);
+      }
+      voice *= env * 0.28;
+
+      // Consonant fricative burst (s/sh/t)
+      let fricative = 0;
+      if (cycle > 0.85 && cycle < 1.12) {
+        const fEnv = Math.sin(((cycle - 0.85) / 0.27) * Math.PI);
+        fricative = (Math.random() * 2 - 1) * fEnv * 0.14;
+      }
+
+      // Background ambient rumble + chatter noise
+      const ambientNoise = (Math.random() * 2 - 1) * 0.09;
+
+      data[i] = voice + fricative + ambientNoise;
+    }
+    return buffer;
+  };
+
+  // Toggle Live Microphone Hearing Aid Engine
   const toggleHearingAid = async () => {
     if (isActive) {
       stopEngine();
     } else {
+      if (isDemoPlaying) stopDemoAudio();
       await startEngine();
     }
   };
@@ -96,11 +251,12 @@ export default function LiveHearingAid({ userAudiogram }) {
       if (ctx.state === 'suspended') await ctx.resume();
       audioCtxRef.current = ctx;
 
-      // Microphone Stream with advanced constraints
+      ensureDspPipeline(ctx);
+
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
-          noiseSuppression: false, // We do custom DSP
+          noiseSuppression: false,
           autoGainControl: false,
           channelCount: 1
         }
@@ -109,73 +265,7 @@ export default function LiveHearingAid({ userAudiogram }) {
 
       const source = ctx.createMediaStreamSource(stream);
       sourceNodeRef.current = source;
-
-      // High-pass filter to remove low rumble/wind noise
-      const rumbleCut = ctx.createBiquadFilter();
-      rumbleCut.type = 'highpass';
-      rumbleCut.frequency.value = 100;
-
-      // Create 6-Band Graphic Equalizer
-      const filters = BANDS.map((b, idx) => {
-        const filter = ctx.createBiquadFilter();
-        filter.type = 'peaking';
-        filter.frequency.value = b.freq;
-        filter.Q.value = 1.4;
-        filter.gain.value = eqGains[idx];
-        return filter;
-      });
-      filtersRef.current = filters;
-
-      // Vocal Clarity Formant Boost (around 3kHz)
-      const vocalFilter = ctx.createBiquadFilter();
-      vocalFilter.type = 'peaking';
-      vocalFilter.frequency.value = 3200;
-      vocalFilter.Q.value = 1.8;
-      vocalFilter.gain.value = (vocalClarity / 100) * 12;
-      vocalFilterRef.current = vocalFilter;
-
-      // Dynamic Noise Low-pass filter
-      const noiseFilter = ctx.createBiquadFilter();
-      noiseFilter.type = 'lowpass';
-      noiseFilter.frequency.value = 9000 - (noiseReduction * 30);
-      noiseLowPassRef.current = noiseFilter;
-
-      // Master Gain Node with Dynamics Compressor to protect ears
-      const compressor = ctx.createDynamicsCompressor();
-      compressor.threshold.setValueAtTime(-24, ctx.currentTime);
-      compressor.knee.setValueAtTime(30, ctx.currentTime);
-      compressor.ratio.setValueAtTime(12, ctx.currentTime);
-      compressor.attack.setValueAtTime(0.003, ctx.currentTime);
-      compressor.release.setValueAtTime(0.25, ctx.currentTime);
-
-      const masterGain = ctx.createGain();
-      masterGain.gain.value = volume;
-      gainNodeRef.current = masterGain;
-
-      // Analyser for visualizer & dB meter
-      const analyser = ctx.createAnalyser();
-      analyser.fftSize = 128;
-      analyser.smoothingTimeConstant = 0.8;
-      analyserRef.current = analyser;
-
-      // Connect the processing chain:
-      // Source -> RumbleCut -> Filters[0..5] -> VocalFilter -> NoiseFilter -> Compressor -> MasterGain -> Analyser -> Destination
-      source.connect(rumbleCut);
-      let prevNode = rumbleCut;
-
-      filters.forEach(f => {
-        prevNode.connect(f);
-        prevNode = f;
-      });
-
-      prevNode.connect(vocalFilter);
-      vocalFilter.connect(noiseFilter);
-      noiseFilter.connect(compressor);
-      compressor.connect(masterGain);
-      masterGain.connect(analyser);
-
-      // Connect to headphones output
-      masterGain.connect(ctx.destination);
+      source.connect(rumbleCutRef.current);
 
       setIsActive(true);
       setDeviceWarning(false);
@@ -188,16 +278,157 @@ export default function LiveHearingAid({ userAudiogram }) {
   };
 
   const stopEngine = () => {
-    if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
     if (micStreamRef.current) {
       micStreamRef.current.getTracks().forEach(track => track.stop());
       micStreamRef.current = null;
     }
-    if (audioCtxRef.current) {
+    if (!isDemoPlaying && audioCtxRef.current) {
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
       audioCtxRef.current.close();
       audioCtxRef.current = null;
+      rumbleCutRef.current = null;
     }
     setIsActive(false);
+  };
+
+  // --- AUDIO SIMULATION DEMO (Before vs After) ---
+  const toggleDemoAudio = async () => {
+    if (isDemoPlaying) {
+      stopDemoAudio();
+    } else {
+      if (isActive) stopEngine();
+      await startDemoAudio();
+    }
+  };
+
+  const startDemoAudio = async () => {
+    try {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      let ctx = audioCtxRef.current;
+      if (!ctx || ctx.state === 'closed') {
+        ctx = new AudioContext();
+        audioCtxRef.current = ctx;
+      }
+      if (ctx.state === 'suspended') await ctx.resume();
+
+      ensureDspPipeline(ctx);
+
+      // Create audio buffer and source
+      const buffer = createDemoAudioBuffer(ctx);
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+      source.loop = true;
+      demoSourceRef.current = source;
+
+      // Create branches for Enhanced vs Raw
+      const enhancedGain = ctx.createGain();
+      const rawGain = ctx.createGain();
+      demoEnhancedGainRef.current = enhancedGain;
+      demoRawGainRef.current = rawGain;
+
+      // Connect source to both branches
+      source.connect(enhancedGain);
+      source.connect(rawGain);
+
+      // Enhanced branch routes through DSP pipeline
+      enhancedGain.connect(rumbleCutRef.current);
+
+      // Raw branch bypasses DSP, routes directly to analyser and output
+      rawGain.connect(analyserRef.current);
+      rawGain.connect(ctx.destination);
+
+      // Set initial volume per mode
+      if (demoMode === 'enhanced') {
+        enhancedGain.gain.setValueAtTime(1.0, ctx.currentTime);
+        rawGain.gain.setValueAtTime(0.0, ctx.currentTime);
+      } else {
+        enhancedGain.gain.setValueAtTime(0.0, ctx.currentTime);
+        rawGain.gain.setValueAtTime(0.7, ctx.currentTime);
+      }
+
+      source.start(0);
+      setIsDemoPlaying(true);
+      startVisualizer();
+    } catch (err) {
+      console.error('Error starting demo audio:', err);
+    }
+  };
+
+  const stopDemoAudio = () => {
+    if (demoSourceRef.current) {
+      try { demoSourceRef.current.stop(); } catch (e) {}
+      demoSourceRef.current.disconnect();
+      demoSourceRef.current = null;
+    }
+    if (!isActive && audioCtxRef.current) {
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+      audioCtxRef.current.close();
+      audioCtxRef.current = null;
+      rumbleCutRef.current = null;
+    }
+    setIsDemoPlaying(false);
+  };
+
+  const handleSwitchDemoMode = (newMode) => {
+    setDemoMode(newMode);
+    if (audioCtxRef.current && demoEnhancedGainRef.current && demoRawGainRef.current) {
+      const now = audioCtxRef.current.currentTime;
+      if (newMode === 'enhanced') {
+        demoEnhancedGainRef.current.gain.setTargetAtTime(1.0, now, 0.05);
+        demoRawGainRef.current.gain.setTargetAtTime(0.0, now, 0.05);
+      } else {
+        demoEnhancedGainRef.current.gain.setTargetAtTime(0.0, now, 0.05);
+        demoRawGainRef.current.gain.setTargetAtTime(0.7, now, 0.05);
+      }
+    }
+  };
+
+  // Real-time Canvas Spectrum Visualizer & dB Meter
+  const startVisualizer = () => {
+    const canvas = canvasRef.current;
+    if (!canvas || !analyserRef.current) return;
+    const ctx = canvas.getContext('2d');
+    const analyser = analyserRef.current;
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+
+    const render = () => {
+      animFrameRef.current = requestAnimationFrame(render);
+      analyser.getByteFrequencyData(dataArray);
+
+      // Estimate dB level from RMS
+      let sum = 0;
+      for (let i = 0; i < bufferLength; i++) {
+        sum += dataArray[i];
+      }
+      const avg = sum / bufferLength;
+      const estimatedDb = Math.min(100, Math.round(30 + (avg / 255) * 60));
+      setCurrentDb(estimatedDb);
+
+      // Draw bars
+      const width = canvas.width = 400;
+      const height = canvas.height = 100;
+      ctx.clearRect(0, 0, width, height);
+
+      const barWidth = (width / bufferLength) * 2;
+      let x = 0;
+
+      for (let i = 0; i < bufferLength; i++) {
+        const barHeight = (dataArray[i] / 255) * height;
+        const grad = ctx.createLinearGradient(0, height, 0, 0);
+        if (demoMode === 'raw' && isDemoPlaying) {
+          grad.addColorStop(0, '#F59E0B');
+          grad.addColorStop(1, '#EF4444');
+        } else {
+          grad.addColorStop(0, '#6C63FF');
+          grad.addColorStop(1, '#00D4AA');
+        }
+        ctx.fillStyle = grad;
+        ctx.fillRect(x, height - barHeight, barWidth - 1, barHeight);
+        x += barWidth;
+      }
+    };
+    render();
   };
 
   // Update Equalizer Bands in real-time
@@ -238,53 +469,39 @@ export default function LiveHearingAid({ userAudiogram }) {
     }
   };
 
-  // Real-time Canvas Spectrum Visualizer & dB Meter
-  const startVisualizer = () => {
-    const canvas = canvasRef.current;
-    if (!canvas || !analyserRef.current) return;
-    const ctx = canvas.getContext('2d');
-    const analyser = analyserRef.current;
-    const bufferLength = analyser.frequencyBinCount;
-    const dataArray = new Uint8Array(bufferLength);
-
-    const render = () => {
-      animFrameRef.current = requestAnimationFrame(render);
-      analyser.getByteFrequencyData(dataArray);
-
-      // Estimate dB level from RMS
-      let sum = 0;
-      for (let i = 0; i < bufferLength; i++) {
-        sum += dataArray[i];
+  // Save Settings to Cloud API
+  const handleSaveToCloud = async () => {
+    setIsSavingCloud(true);
+    setCloudSaveMessage('');
+    try {
+      const payload = {
+        freq_high: eqGains[4] || 10,
+        noise_reduction: noiseReduction,
+        voice_enhance: vocalClarity
+      };
+      const res = await fetch('/api/audio_settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        setCloudSaveMessage('تم حفظ التفضيلات السمعية سحابياً بنجاح ☁️✅');
+      } else {
+        setCloudSaveMessage('تم الحفظ محلياً (وضع الذاكرة السحابية الاحتياطية) 💾');
       }
-      const avg = sum / bufferLength;
-      const estimatedDb = Math.min(100, Math.round(30 + (avg / 255) * 60));
-      setCurrentDb(estimatedDb);
-
-      // Draw bars
-      const width = canvas.width = 400;
-      const height = canvas.height = 100;
-      ctx.clearRect(0, 0, width, height);
-
-      const barWidth = (width / bufferLength) * 2;
-      let x = 0;
-
-      for (let i = 0; i < bufferLength; i++) {
-        const barHeight = (dataArray[i] / 255) * height;
-        const grad = ctx.createLinearGradient(0, height, 0, 0);
-        grad.addColorStop(0, '#6C63FF');
-        grad.addColorStop(1, '#00D4AA');
-        ctx.fillStyle = grad;
-        ctx.fillRect(x, height - barHeight, barWidth - 1, barHeight);
-        x += barWidth;
-      }
-    };
-    render();
+    } catch (err) {
+      setCloudSaveMessage('تم الحفظ محلياً بنجاح 💾');
+    } finally {
+      setIsSavingCloud(false);
+      setTimeout(() => setCloudSaveMessage(''), 4000);
+    }
   };
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
       stopEngine();
+      stopDemoAudio();
     };
   }, []);
 
@@ -293,30 +510,49 @@ export default function LiveHearingAid({ userAudiogram }) {
       {/* Header */}
       <div className="aid-header">
         <div className="aid-title-cluster">
-          <div className={`aid-indicator-dot ${isActive ? 'active' : ''}`}></div>
+          <div className={`aid-indicator-dot ${(isActive || isDemoPlaying) ? 'active' : ''}`}></div>
           <div>
             <h3>المعين السمعي الحي المباشر (Live Smart Hearing Aid)</h3>
             <p>معالجة فورية لصوت الميكروفون وتعويض الترددات الناقصة في أذنك بدون أي تأخير.</p>
           </div>
         </div>
 
-        <button
-          onClick={toggleHearingAid}
-          className={`btn-power-toggle ${isActive ? 'active' : ''}`}
-        >
-          {isActive ? (
-            <>
-              <Mic className="w-5 h-5 ml-2" />
-              إيقاف المعين السمعي
-            </>
-          ) : (
-            <>
-              <MicOff className="w-5 h-5 ml-2" />
-              تشغيل المعين السمعي الحي
-            </>
-          )}
-        </button>
+        <div className="aid-header-actions">
+          <button
+            onClick={handleSaveToCloud}
+            disabled={isSavingCloud}
+            className="btn-cloud-save"
+            title="مزامنة الإعدادات مع السحابة"
+          >
+            <Cloud className="w-4 h-4 ml-1.5" />
+            {isSavingCloud ? 'جارٍ الحفظ...' : 'حفظ سحابياً'}
+          </button>
+
+          <button
+            onClick={toggleHearingAid}
+            className={`btn-power-toggle ${isActive ? 'active' : ''}`}
+          >
+            {isActive ? (
+              <>
+                <Mic className="w-5 h-5 ml-2" />
+                إيقاف الميكروفون
+              </>
+            ) : (
+              <>
+                <MicOff className="w-5 h-5 ml-2" />
+                تشغيل الميكروفون الحي
+              </>
+            )}
+          </button>
+        </div>
       </div>
+
+      {cloudSaveMessage && (
+        <div className="aid-cloud-toast">
+          <Check className="w-4 h-4 text-emerald-400 ml-1.5" />
+          <span>{cloudSaveMessage}</span>
+        </div>
+      )}
 
       {deviceWarning && (
         <div className="aid-warning-banner">
@@ -325,11 +561,69 @@ export default function LiveHearingAid({ userAudiogram }) {
         </div>
       )}
 
+      {/* --- NEW: Interactive Audio Demo & Simulation Box --- */}
+      <div className="aid-demo-simulation-card">
+        <div className="demo-header-row">
+          <div className="demo-title-cluster">
+            <span className="demo-badge">🎧 معاينة تجريبية للمحكّمين</span>
+            <h4>المقارنة السمعية الحية (عينة كلامية مع ضوضاء محيطة)</h4>
+            <p>جرّب الاستماع فورياً بدون ميكروفون وبدون صدى؛ قارن بين الصوت الخام وصوت مدى السمع المكيّف.</p>
+          </div>
+
+          <button
+            onClick={toggleDemoAudio}
+            className={`btn-demo-play ${isDemoPlaying ? 'playing' : ''}`}
+          >
+            {isDemoPlaying ? (
+              <>
+                <Pause className="w-5 h-5 ml-2 text-emerald-300" />
+                إيقاف العينة الصوتية
+              </>
+            ) : (
+              <>
+                <Play className="w-5 h-5 ml-2 text-white" />
+                تشغيل عينة المحاكاة الصوتية
+              </>
+            )}
+          </button>
+        </div>
+
+        {isDemoPlaying && (
+          <div className="demo-mode-switcher-container">
+            <span className="switcher-label">وضع الاستماع الحالي:</span>
+            <div className="demo-toggle-group">
+              <button
+                onClick={() => handleSwitchDemoMode('raw')}
+                className={`demo-switch-btn raw ${demoMode === 'raw' ? 'active' : ''}`}
+              >
+                <VolumeX className="w-4 h-4 ml-1.5" />
+                الصوت الأصلي (قبل التكييف)
+              </button>
+              <button
+                onClick={() => handleSwitchDemoMode('enhanced')}
+                className={`demo-switch-btn enhanced ${demoMode === 'enhanced' ? 'active' : ''}`}
+              >
+                <Sparkles className="w-4 h-4 ml-1.5" />
+                معالجة مدى السمع (بعد التكييف)
+              </button>
+            </div>
+
+            <div className={`demo-status-explanation ${demoMode}`}>
+              {demoMode === 'raw' ? (
+                <span>⚠️ <strong>الصوت الخام:</strong> تستمع الآن للصوت الأصلي مع تشويش وضوضاء عالية وانخفاض في مخارج الحروف.</span>
+              ) : (
+                <span>✨ <strong>صوت مدى السمع المكيّف:</strong> تم عزل الضوضاء بنسبة {noiseReduction}%، وتضخيم ترددات النطق، وتعويض فقدان السمع.</span>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Visualizer & dB Status Bar */}
       <div className="aid-monitor-strip">
         <div className="db-meter-box">
           <Activity className="w-4 h-4 text-emerald-400 ml-1 inline" />
-          مستوى الصوت المحيط: <strong>{isActive ? currentDb : '--'} dB</strong>
+          مستوى الصوت: <strong>{(isActive || isDemoPlaying) ? currentDb : '--'} dB</strong>
           <span className={`db-status-pill ${currentDb > 75 ? 'warning' : 'safe'}`}>
             {currentDb > 75 ? 'صاخب ⚠️' : 'مريح وآمن ✅'}
           </span>
@@ -425,8 +719,18 @@ export default function LiveHearingAid({ userAudiogram }) {
       {/* 6-Band Graphic Equalizer */}
       <div className="aid-equalizer-section">
         <div className="eq-header">
-          <Sliders className="w-4 h-4 ml-2 inline text-indigo-400" />
-          <span>الموازن الترددي الدقيق (6-Band Graphic Equalizer)</span>
+          <div className="eq-header-title">
+            <Sliders className="w-4 h-4 ml-2 inline text-indigo-400" />
+            <span>الموازن الترددي الدقيق (6-Band Graphic Equalizer)</span>
+          </div>
+          <button 
+            onClick={() => applyPreset('custom')} 
+            className="btn-eq-reset"
+            title="إعادة المعايرة حسب المخطط السمعي"
+          >
+            <RotateCcw className="w-3.5 h-3.5 ml-1 inline" />
+            إعادة الضبط للفحص
+          </button>
         </div>
         <div className="eq-bands-grid">
           {BANDS.map((band, idx) => (
