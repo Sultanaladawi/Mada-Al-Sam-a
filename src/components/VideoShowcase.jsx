@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   Play, Pause, RotateCcw, Volume2, VolumeX, Sparkles, 
   CheckCircle2, BookOpen, Activity, ShieldAlert, Monitor, 
-  ChevronRight, ExternalLink, Layers, Eye 
+  ChevronRight, ChevronLeft, ExternalLink, Layers, Eye 
 } from 'lucide-react';
 import MadaLogo from './MadaLogo';
 
@@ -109,7 +109,11 @@ export default function VideoShowcase({ onOpenDeafGuide, onViewChange }) {
 
         ctx.fillStyle = grad;
         ctx.beginPath();
-        ctx.roundRect(x, y, barWidth, barHeight, 3);
+        if (typeof ctx.roundRect === 'function') {
+          ctx.roundRect(x, y, barWidth, barHeight, 3);
+        } else {
+          ctx.rect(x, y, barWidth, barHeight);
+        }
         ctx.fill();
       }
 
