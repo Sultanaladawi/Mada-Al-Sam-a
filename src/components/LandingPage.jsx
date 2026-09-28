@@ -5,6 +5,7 @@ import {
   Users, GraduationCap, Briefcase, Zap, Play, Pause, RefreshCw, 
   BarChart2, ShieldCheck, ChevronRight, Sliders, Eye
 } from 'lucide-react';
+import MadaLogo from './MadaLogo';
 
 export default function LandingPage({ onViewChange }) {
   const [currentCaption, setCurrentCaption] = useState(0);
@@ -95,7 +96,7 @@ export default function LandingPage({ onViewChange }) {
         </div>
         <div className="hero-content">
           <div className="hero-badge">
-            <span className="badge-dot"></span>
+            <MadaLogo size={22} iconOnly={true} className="inline-flex ml-2" />
             منظومة الوصول الصوتي الذكي الشاملة لتمكين ذوي الإعاقة السمعية
           </div>
           <h1 className="hero-title">

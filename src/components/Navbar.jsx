@@ -3,6 +3,7 @@ import {
   Volume2, Sparkles, Activity, ShieldAlert, BookOpen, LayoutDashboard, 
   Home, Eye, Menu, X, Globe, ChevronLeft 
 } from 'lucide-react';
+import MadaLogo from './MadaLogo';
 
 export default function Navbar({ currentView, onViewChange, activeTab, onTabChange, highContrast, onToggleContrast }) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -22,25 +23,13 @@ export default function Navbar({ currentView, onViewChange, activeTab, onTabChan
       <header className="mada-global-navbar">
         <div className="navbar-inner-container">
           {/* Brand Logo */}
-          <div className="navbar-brand" onClick={() => onViewChange('landing')}>
-            <div className="brand-logo-icon">
-              <svg viewBox="0 0 40 40" fill="none" className="w-8 h-8">
-                <circle cx="20" cy="20" r="18" stroke="url(#madaGrad)" strokeWidth="2.5" />
-                <path d="M12 20 Q16 10 20 20 Q24 30 28 20" stroke="url(#madaGrad)" strokeWidth="2.5" strokeLinecap="round" fill="none" />
-                <circle cx="20" cy="20" r="3" fill="url(#madaGrad)" />
-                <defs>
-                  <linearGradient id="madaGrad" x1="0" y1="0" x2="40" y2="40">
-                    <stop stopColor="#6C63FF" />
-                    <stop offset="1" stopColor="#00D4AA" />
-                  </linearGradient>
-                </defs>
-              </svg>
-            </div>
-            <div className="brand-text-cluster">
-              <span className="brand-title">مدى السمع</span>
-              <span className="brand-badge">منظومة الوصول الشامل</span>
-            </div>
-          </div>
+          <MadaLogo 
+            size={42} 
+            showText={true} 
+            showBadge={true} 
+            badgeText="منظومة الوصول الشامل"
+            onClick={() => onViewChange('landing')}
+          />
 
           {/* Desktop Center Nav Links / Tabs */}
           {currentView === 'dashboard' ? (
@@ -146,20 +135,12 @@ export default function Navbar({ currentView, onViewChange, activeTab, onTabChan
           <div className="mada-drawer-panel" onClick={(e) => e.stopPropagation()}>
             <div className="drawer-header">
               <div className="drawer-brand">
-                <div className="brand-logo-icon small">
-                  <svg viewBox="0 0 40 40" fill="none" className="w-6 h-6">
-                    <circle cx="20" cy="20" r="18" stroke="url(#madaGrad2)" strokeWidth="2.5" />
-                    <path d="M12 20 Q16 10 20 20 Q24 30 28 20" stroke="url(#madaGrad2)" strokeWidth="2.5" strokeLinecap="round" fill="none" />
-                    <circle cx="20" cy="20" r="3" fill="url(#madaGrad2)" />
-                    <defs>
-                      <linearGradient id="madaGrad2" x1="0" y1="0" x2="40" y2="40">
-                        <stop stopColor="#6C63FF" />
-                        <stop offset="1" stopColor="#00D4AA" />
-                      </linearGradient>
-                    </defs>
-                  </svg>
-                </div>
-                <span className="drawer-brand-title">منظومة مدى السمع</span>
+                <MadaLogo 
+                  size={34} 
+                  showText={true} 
+                  showBadge={false}
+                  onClick={() => handleMobileViewChange('landing')}
+                />
               </div>
               <button onClick={() => setIsDrawerOpen(false)} className="btn-drawer-close">
                 <X className="w-5 h-5" />

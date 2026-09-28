@@ -1,5 +1,6 @@
 import React from 'react';
 import { Heart, ShieldCheck, ExternalLink } from 'lucide-react';
+import MadaLogo from './MadaLogo';
 
 export default function Footer({ onViewChange }) {
   return (
@@ -8,7 +9,13 @@ export default function Footer({ onViewChange }) {
         <div className="footer-top-grid">
           {/* Col 1 */}
           <div className="footer-col-about">
-            <div className="footer-brand-title">مدى السمع (Mada Al-Sam'a)</div>
+            <MadaLogo 
+              size={36} 
+              showText={true} 
+              showBadge={false} 
+              className="mb-3"
+              onClick={() => onViewChange('landing')}
+            />
             <p>
               المنظومة البيئية الشاملة لتمكين ذوي الإعاقة السمعية عبر طبقة وصول ذكية توفق بين التقنية الحديثة والأذن البشرية.
             </p>
