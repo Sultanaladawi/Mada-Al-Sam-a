@@ -339,80 +339,85 @@ export default function LogoMotionIntro({ isOpen, isSplashMode = false, onClose 
 
     // --- PHASE 5: Diamond Spark Lens Flare (p: 0.65 to 0.95) ---
     const flareP = Math.max(0, Math.min(1, (p - 0.65) / 0.3));
-    if (flareP > 0) {
+    if (flareP > 0 && flareP < 0.999) {
       ctx.save();
-      ctx.translate(cx, cy);
-      const baseScale = (emblemScale / 100);
-      const sparkX = (55 - 50) * baseScale;
-      const sparkY = (27 - 50) * baseScale;
+      try {
+        ctx.translate(cx, cy);
+        const baseScale = (emblemScale / 100);
+        const sparkX = (55 - 50) * baseScale;
+        const sparkY = (27 - 50) * baseScale;
 
-      const flareWidth = emblemScale * 1.1 * Math.sin(flareP * Math.PI);
-      const flareGrad = ctx.createLinearGradient(sparkX - flareWidth / 2, sparkY, sparkX + flareWidth / 2, sparkY);
-      flareGrad.addColorStop(0, 'rgba(56, 189, 248, 0)');
-      flareGrad.addColorStop(0.5, 'rgba(255, 255, 255, 0.98)');
-      flareGrad.addColorStop(1, 'rgba(0, 212, 170, 0)');
+        const flareWidth = Math.max(4, emblemScale * 1.1 * Math.sin(flareP * Math.PI));
+        const flareGrad = ctx.createLinearGradient(sparkX - flareWidth / 2, sparkY, sparkX + flareWidth / 2, sparkY);
+        flareGrad.addColorStop(0, 'rgba(56, 189, 248, 0)');
+        flareGrad.addColorStop(0.5, 'rgba(255, 255, 255, 0.98)');
+        flareGrad.addColorStop(1, 'rgba(0, 212, 170, 0)');
 
-      ctx.strokeStyle = flareGrad;
-      ctx.lineWidth = 4.0;
-      ctx.beginPath();
-      ctx.moveTo(sparkX - flareWidth / 2, sparkY);
-      ctx.lineTo(sparkX + flareWidth / 2, sparkY);
-      ctx.stroke();
+        ctx.strokeStyle = flareGrad;
+        ctx.lineWidth = 4.0;
+        ctx.beginPath();
+        ctx.moveTo(sparkX - flareWidth / 2, sparkY);
+        ctx.lineTo(sparkX + flareWidth / 2, sparkY);
+        ctx.stroke();
 
-      const starR = 8 * baseScale * (0.8 + 0.4 * Math.sin(flareP * Math.PI));
-      ctx.fillStyle = '#FFFFFF';
-      ctx.shadowColor = '#FFFFFF';
-      ctx.shadowBlur = 30;
-      ctx.beginPath();
-      ctx.arc(sparkX, sparkY, starR, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.restore();
+        const starR = Math.max(1, 8 * baseScale * (0.8 + 0.4 * Math.sin(flareP * Math.PI)));
+        ctx.fillStyle = '#FFFFFF';
+        ctx.shadowColor = '#FFFFFF';
+        ctx.shadowBlur = 30;
+        ctx.beginPath();
+        ctx.arc(sparkX, sparkY, starR, 0, Math.PI * 2);
+        ctx.fill();
+      } finally {
+        ctx.restore();
+      }
     }
 
     // --- PHASE 6: Royal Typography & Subtitle (p: 0.7 to 1.0) ---
     const textP = Math.max(0, Math.min(1, (p - 0.7) / 0.3));
     if (textP > 0) {
       ctx.save();
-      ctx.globalAlpha = textP;
+      try {
+        ctx.globalAlpha = textP;
 
-      const textY = cy + emblemScale * 0.65 + 40;
+        const textY = cy + emblemScale * 0.65 + 40;
 
-      // 1. Primary Title: "مَدَى السَّمْع"
-      const fontSize = Math.max(26, Math.min(64, isPortrait ? width * 0.075 : width * 0.045));
-      ctx.font = `900 ${fontSize}px "Cairo", "Tajawal", sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
+        // 1. Primary Title: "مَدَى السَّمْع"
+        const fontSize = Math.max(26, Math.min(64, isPortrait ? width * 0.075 : width * 0.045));
+        ctx.font = `900 ${fontSize}px "Cairo", "Tajawal", sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
 
-      const shimmerOffset = (p - 0.7) * 4;
-      const titleGrad = ctx.createLinearGradient(
-        cx - fontSize * 3 + shimmerOffset * 100, textY,
-        cx + fontSize * 3 + shimmerOffset * 100, textY
-      );
-      titleGrad.addColorStop(0, '#FFFFFF');
-      titleGrad.addColorStop(0.4, '#38BDF8');
-      titleGrad.addColorStop(0.7, '#00D4AA');
-      titleGrad.addColorStop(1, '#FFFFFF');
+        const shimmerOffset = (p - 0.7) * 4;
+        const gradSpan = Math.max(20, fontSize * 3);
+        const titleGrad = ctx.createLinearGradient(
+          cx - gradSpan + shimmerOffset * 100, textY,
+          cx + gradSpan + shimmerOffset * 100, textY
+        );
+        titleGrad.addColorStop(0, '#FFFFFF');
+        titleGrad.addColorStop(0.4, '#38BDF8');
+        titleGrad.addColorStop(0.7, '#00D4AA');
+        titleGrad.addColorStop(1, '#FFFFFF');
 
-      ctx.shadowColor = 'rgba(0, 212, 170, 0.5)';
-      ctx.shadowBlur = 22;
-      ctx.fillStyle = titleGrad;
-      ctx.fillText('مَدَى السَّمْع', cx, textY);
+        ctx.shadowColor = 'rgba(0, 212, 170, 0.5)';
+        ctx.shadowBlur = 22;
+        ctx.fillStyle = titleGrad;
+        ctx.fillText('مَدَى السَّمْع', cx, textY);
 
-      // 2. Subtitle: "طبقة الوصول الصوتي الذكي"
-      const subFontSize = Math.max(13, Math.min(24, fontSize * 0.44));
-      ctx.font = `600 ${subFontSize}px "Tajawal", sans-serif`;
-      ctx.fillStyle = '#94A3B8';
-      ctx.shadowBlur = 0;
-      ctx.fillText('طبقة الوصول الصوتي الذكي ونظام التأهيل السمعي المتكامل', cx, textY + fontSize * 0.85);
+        // 2. Subtitle: "طبقة الوصول الصوتي الذكي"
+        const subFontSize = Math.max(13, Math.min(24, fontSize * 0.44));
+        ctx.font = `600 ${subFontSize}px "Tajawal", sans-serif`;
+        ctx.fillStyle = '#94A3B8';
+        ctx.shadowBlur = 0;
+        ctx.fillText('طبقة الوصول الصوتي الذكي ونظام التأهيل السمعي المتكامل', cx, textY + fontSize * 0.85);
 
-      // 3. Creator Badge: "تطوير وابتكار: سلطان العدوي — مهندس برمجيات"
-      const badgeFontSize = Math.max(12, Math.min(20, fontSize * 0.36));
-      ctx.font = `700 ${badgeFontSize}px "Cairo", sans-serif`;
-      ctx.fillStyle = '#00D4AA';
-      ctx.fillText('تطوير وابتكار: سلطان العدوي — مهندس برمجيات', cx, textY + fontSize * 1.55);
-
-      ctx.restore();
+        // 3. Creator Badge: "تطوير وابتكار: سلطان العدوي — مهندس برمجيات"
+        const badgeFontSize = Math.max(12, Math.min(20, fontSize * 0.36));
+        ctx.font = `700 ${badgeFontSize}px "Cairo", sans-serif`;
+        ctx.fillStyle = '#00D4AA';
+        ctx.fillText('تطوير وابتكار: سلطان العدوي — مهندس برمجيات', cx, textY + fontSize * 1.55);
+      } finally {
+        ctx.restore();
+      }
     }
   }, []);
 
