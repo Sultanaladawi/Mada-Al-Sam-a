@@ -3368,7 +3368,8 @@ body {
 }
 
 .eq-v-slider {
-  -webkit-appearance: slider-vertical;
+  writing-mode: vertical-lr;
+  direction: rtl;
   width: 8px;
   height: 100px;
   accent-color: #6C63FF;
