@@ -594,9 +594,11 @@ export default function LogoMotionIntro({ isOpen, isSplashMode = false, onClose 
 
   return (
     <div 
-      className={`theatre-fullscreen-root ${isClosing ? 'theatre-dissolve' : ''}`} 
+      className={`theatre-fullscreen-root ${isClosing ? 'theatre-dissolve' : ''} ${isSplashMode ? 'splash-theatre-clean' : ''}`} 
       role="dialog" 
       aria-modal="true"
+      onClick={isSplashMode ? handleCloseWithFade : undefined}
+      title={isSplashMode ? 'انقر في أي مكان للدخول المباشر للموقع' : undefined}
     >
       {/* 100VW x 100VH Canvas filling the entire screen */}
       <canvas 
@@ -604,75 +606,72 @@ export default function LogoMotionIntro({ isOpen, isSplashMode = false, onClose 
         className="theatre-canvas"
       />
 
-      {/* Floating Discreet Top Bar */}
-      <div className="theatre-top-bar">
-        <div className="theatre-brand-watermark">
-          <MadaLogo size={26} iconOnly={true} />
-          <span>منظومة «مَدَى السَّمْع»</span>
-        </div>
+      {/* Top and Bottom Controls Deck — ONLY shown when opened manually, hidden completely on initial load & refresh */}
+      {!isSplashMode && (
+        <>
+          {/* Floating Discreet Top Bar */}
+          <div className="theatre-top-bar" onClick={(e) => e.stopPropagation()}>
+            <div className="theatre-brand-watermark">
+              <MadaLogo size={26} iconOnly={true} />
+              <span>منظومة «مَدَى السَّمْع»</span>
+            </div>
 
-        <div className="theatre-top-actions">
-          <button 
-            onClick={() => setIsMuted(prev => !prev)} 
-            className={`theatre-pill-btn ${isMuted ? 'muted' : ''}`}
-            title={isMuted ? 'تفعيل الصوت' : 'كتم الصوت'}
-          >
-            {isMuted ? <VolumeX className="w-4 h-4 ml-1" /> : <Volume2 className="w-4 h-4 ml-1 text-emerald-400" />}
-            <span>{isMuted ? 'الصوت مكتوم' : '432Hz نغمة الشعار'}</span>
-          </button>
+            <div className="theatre-top-actions">
+              <button 
+                onClick={() => setIsMuted(prev => !prev)} 
+                className={`theatre-pill-btn ${isMuted ? 'muted' : ''}`}
+                title={isMuted ? 'تفعيل الصوت' : 'كتم الصوت'}
+              >
+                {isMuted ? <VolumeX className="w-4 h-4 ml-1" /> : <Volume2 className="w-4 h-4 ml-1 text-emerald-400" />}
+                <span>{isMuted ? 'الصوت مكتوم' : '432Hz نغمة الشعار'}</span>
+              </button>
 
-          <button 
-            onClick={handleCloseWithFade} 
-            className="theatre-skip-btn"
-            title="تخطي المقدمة والدخول المباشر للمنصة"
-          >
-            <span>تخطي للموقع ⏩</span>
-          </button>
+              <button 
+                onClick={handleCloseWithFade} 
+                className="theatre-close-btn"
+                title="إغلاق الشاشة والدخول للموقع"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
 
-          <button 
-            onClick={handleCloseWithFade} 
-            className="theatre-close-btn"
-            title="إغلاق الشاشة والدخول للموقع"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-      </div>
+          {/* Floating Minimalist Bottom Dock */}
+          <div className="theatre-bottom-dock" onClick={(e) => e.stopPropagation()}>
+            <button 
+              onClick={handleReplay} 
+              className="theatre-dock-btn"
+              title="إعادة تشغيل الحركة السينمائية"
+            >
+              <RotateCcw className="w-4 h-4 ml-1.5" />
+              <span>إعادة التشغيل</span>
+            </button>
 
-      {/* Floating Minimalist Bottom Dock */}
-      <div className="theatre-bottom-dock">
-        <button 
-          onClick={handleReplay} 
-          className="theatre-dock-btn"
-          title="إعادة تشغيل الحركة السينمائية"
-        >
-          <RotateCcw className="w-4 h-4 ml-1.5" />
-          <span>إعادة التشغيل</span>
-        </button>
+            <div className="theatre-meta-pill hidden-mobile">
+              <Sparkles className="w-3.5 h-3.5 ml-1 text-cyan-400" />
+              <span>60 FPS • 4K Cinema • تطوير: سلطان العدوي</span>
+            </div>
 
-        <div className="theatre-meta-pill hidden-mobile">
-          <Sparkles className="w-3.5 h-3.5 ml-1 text-cyan-400" />
-          <span>60 FPS • 4K Cinema • تطوير: سلطان العدوي</span>
-        </div>
+            <button 
+              onClick={handleExportVideo} 
+              disabled={isExporting}
+              className="theatre-dock-btn theatre-btn-download"
+              title="تصدير وتحميل ملف الفيديو (WebM) لجهازك"
+            >
+              <Download className="w-4 h-4 ml-1.5" />
+              <span>{isExporting ? `جاري التصدير (${exportProgress}%)` : 'تحميل الفيديو (WebM)'}</span>
+            </button>
+          </div>
 
-        <button 
-          onClick={handleExportVideo} 
-          disabled={isExporting}
-          className="theatre-dock-btn theatre-btn-download"
-          title="تصدير وتحميل ملف الفيديو (WebM) لجهازك"
-        >
-          <Download className="w-4 h-4 ml-1.5" />
-          <span>{isExporting ? `جاري التصدير (${exportProgress}%)` : 'تحميل الفيديو (WebM)'}</span>
-        </button>
-      </div>
-
-      {/* Bottom Screen Edge Progress Track */}
-      <div className="theatre-progress-edge">
-        <div 
-          className="theatre-progress-edge-fill" 
-          style={{ width: `${progress * 100}%` }} 
-        />
-      </div>
+          {/* Bottom Screen Edge Progress Track */}
+          <div className="theatre-progress-edge">
+            <div 
+              className="theatre-progress-edge-fill" 
+              style={{ width: `${progress * 100}%` }} 
+            />
+          </div>
+        </>
+      )}
     </div>
   );
 }

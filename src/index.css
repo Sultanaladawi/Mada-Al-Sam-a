@@ -7637,6 +7637,10 @@ body {
   pointer-events: none !important;
 }
 
+.splash-theatre-clean {
+  cursor: pointer;
+}
+
 .theatre-canvas {
   position: absolute !important;
   inset: 0 !important;
