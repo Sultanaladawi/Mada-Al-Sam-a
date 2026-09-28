@@ -565,20 +565,6 @@ export default function SmartLectures({ userAudiogram, isCapturingSystem, system
           }
           setLiveInterim(interim);
           liveInterimRef.current = interim;
-
-          // Auto-commit timer: If speech pauses for 1000ms, commit interim seamlessly without overlap!
-          if (autoCommitTimerRef.current) clearTimeout(autoCommitTimerRef.current);
-          if (interim && interim.trim().length > 4) {
-            autoCommitTimerRef.current = setTimeout(() => {
-              if (liveInterimRef.current && liveInterimRef.current.trim()) {
-                const chunk = liveInterimRef.current.trim();
-                setLiveTranscript(prev => appendWithoutDuplicate(prev, chunk));
-                setNewNotes(prev => appendWithoutDuplicate(prev, chunk));
-                liveInterimRef.current = '';
-                setLiveInterim('');
-              }
-            }, 1000);
-          }
         };
 
         recognition.onerror = (err) => {
@@ -600,7 +586,6 @@ export default function SmartLectures({ userAudiogram, isCapturingSystem, system
             liveInterimRef.current = '';
             setLiveInterim('');
           }
-          if (autoCommitTimerRef.current) clearTimeout(autoCommitTimerRef.current);
 
           if (isRecordingLiveRef.current) {
             if (restartTimeoutRef.current) clearTimeout(restartTimeoutRef.current);
