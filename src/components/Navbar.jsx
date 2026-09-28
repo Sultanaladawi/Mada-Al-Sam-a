@@ -5,7 +5,15 @@ import {
 } from 'lucide-react';
 import MadaLogo from './MadaLogo';
 
-export default function Navbar({ currentView, onViewChange, activeTab, onTabChange, highContrast, onToggleContrast }) {
+export default function Navbar({ 
+  currentView, 
+  onViewChange, 
+  activeTab, 
+  onTabChange, 
+  highContrast, 
+  onToggleContrast,
+  onOpenDeafGuide 
+}) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const handleMobileTabClick = (tabKey) => {
@@ -86,6 +94,7 @@ export default function Navbar({ currentView, onViewChange, activeTab, onTabChan
             </nav>
           ) : (
             <nav className="navbar-landing-links">
+              <a href="#video-tour" className="landing-link">عروض الشرح</a>
               <a href="#features" className="landing-link">المميزات</a>
               <a href="#how" className="landing-link">كيف يعمل</a>
               <a href="#clinical" className="landing-link">الفحص السريري</a>
@@ -95,6 +104,16 @@ export default function Navbar({ currentView, onViewChange, activeTab, onTabChan
 
           {/* Right Action Controls */}
           <div className="navbar-right-controls">
+            {/* Deaf Accessibility & Sign Language Quick Button */}
+            <button
+              onClick={onOpenDeafGuide}
+              className="btn-deaf-nav-toggle"
+              title="دليل لغة الإشارة والشرح البصري للصم"
+            >
+              <span className="sign-icon">🤟</span>
+              <span className="hidden-mobile">دليل الصم</span>
+            </button>
+
             <button
               onClick={onToggleContrast}
               className={`btn-contrast-switch ${highContrast ? 'active' : ''}`}
@@ -215,6 +234,17 @@ export default function Navbar({ currentView, onViewChange, activeTab, onTabChan
               </div>
 
               <div className="drawer-footer-actions">
+                <button
+                  onClick={() => {
+                    setIsDrawerOpen(false);
+                    onOpenDeafGuide();
+                  }}
+                  className="btn-drawer-deaf-guide"
+                >
+                  <span className="text-lg ml-2">🤟</span>
+                  <span>دليل لغة الإشارة والشرح البصري للصم</span>
+                </button>
+
                 <button
                   onClick={() => handleMobileViewChange(currentView === 'landing' ? 'dashboard' : 'landing')}
                   className="btn-drawer-switch-view"

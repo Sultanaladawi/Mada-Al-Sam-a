@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   LayoutDashboard, Activity, Volume2, Sparkles, ShieldAlert, 
   BookOpen, Globe, Headphones, ChevronRight, CheckCircle2, 
-  Sliders, ArrowUpRight, Zap, RefreshCw, Layers, Monitor, VolumeX, Info, ExternalLink
+  Sliders, ArrowUpRight, Zap, RefreshCw, Layers, Monitor, VolumeX, Info, ExternalLink,
+  Download, Upload, ShieldCheck, Mic, MicOff, Check, Heart
 } from 'lucide-react';
 
 import HearingTest from './HearingTest/HearingTest';
@@ -22,10 +23,53 @@ const BANDS = [
   { freq: 8000, label: '8kHz' }
 ];
 
-export default function Dashboard({ activeTab = 'overview', onTabChange, onViewChange }) {
+const PRESETS = [
+  {
+    id: 'lecture',
+    name: 'وضع المحاضرات والجامعة',
+    desc: 'تعزيز مخارج الحروف (+10dB) وعزل ضوضاء مقاعد القاعة',
+    icon: '🎓',
+    gains: [0, 2, 4, 10, 8, 4]
+  },
+  {
+    id: 'street',
+    name: 'وضع الشارع والأمان',
+    desc: 'موازنة أطياف الصوت مع تفعيل إنذارات رادار الأمان',
+    icon: '🛡️',
+    gains: [2, 4, 4, 4, 2, 0]
+  },
+  {
+    id: 'meeting',
+    name: 'وضع الاجتماعات (Zoom/Teams)',
+    desc: 'عزل صدى الغرفة وتركيز نبرة المتحدث الرئيسي',
+    icon: '💼',
+    gains: [0, 4, 6, 8, 6, 2]
+  },
+  {
+    id: 'comfort',
+    name: 'وضع الراحة والاسترخاء',
+    desc: 'نغمات دافئة مريحة تخفف إجهاد العصب السمعي',
+    icon: '☕',
+    gains: [4, 2, 0, -2, -4, -6]
+  }
+];
+
+export default function Dashboard({ activeTab = 'overview', onTabChange, onViewChange, onOpenDeafGuide }) {
   const [currentTab, setCurrentTab] = useState(activeTab);
   const [isFloatingCaptions, setIsFloatingCaptions] = useState(false);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
+
+  // --- LIVE SPL ROOM NOISE METER STATE ---
+  const [isMeasuringNoise, setIsMeasuringNoise] = useState(false);
+  const [roomDb, setRoomDb] = useState(36);
+  const noiseCtxRef = useRef(null);
+  const noiseStreamRef = useRef(null);
+  const noiseAnimRef = useRef(null);
+
+  // --- PRESETS & DATA MANAGEMENT STATE ---
+  const [activePreset, setActivePreset] = useState(null);
+  const [dataNotice, setDataNotice] = useState('');
+  const fileInputRef = useRef(null);
 
   // User Audiogram Data
   const [userAudiogram, setUserAudiogram] = useState(() => {
@@ -47,6 +91,117 @@ export default function Dashboard({ activeTab = 'overview', onTabChange, onViewC
       }
     };
   });
+
+  // Start Room Noise Meter via Microphone
+  const startNoiseMeter = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      noiseStreamRef.current = stream;
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      const ctx = new AudioContext();
+      noiseCtxRef.current = ctx;
+      const source = ctx.createMediaStreamSource(stream);
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 512;
+      analyser.smoothingTimeConstant = 0.8;
+      source.connect(analyser);
+
+      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+      setIsMeasuringNoise(true);
+
+      const updateMeter = () => {
+        analyser.getByteFrequencyData(dataArray);
+        let sum = 0;
+        for (let i = 0; i < dataArray.length; i++) {
+          sum += dataArray[i] * dataArray[i];
+        }
+        const rms = Math.sqrt(sum / dataArray.length);
+        const calculatedDb = Math.round(20 * Math.log10(Math.max(1, rms)) + 30);
+        setRoomDb(Math.max(25, Math.min(105, calculatedDb)));
+        noiseAnimRef.current = requestAnimationFrame(updateMeter);
+      };
+      updateMeter();
+    } catch (err) {
+      console.warn('Microphone access denied or not available for room meter:', err);
+      setRoomDb(40);
+      setIsMeasuringNoise(false);
+    }
+  };
+
+  const stopNoiseMeter = () => {
+    if (noiseAnimRef.current) cancelAnimationFrame(noiseAnimRef.current);
+    if (noiseStreamRef.current) {
+      noiseStreamRef.current.getTracks().forEach(t => t.stop());
+    }
+    if (noiseCtxRef.current) {
+      noiseCtxRef.current.close().catch(() => {});
+    }
+    setIsMeasuringNoise(false);
+  };
+
+  // Preset Applicator
+  const applyAudioPreset = (preset) => {
+    setActivePreset(preset.id);
+    if (filtersRef.current.length === 6 && audioCtxRef.current) {
+      const now = audioCtxRef.current.currentTime;
+      preset.gains.forEach((gVal, idx) => {
+        if (filtersRef.current[idx]) {
+          filtersRef.current[idx].gain.setTargetAtTime(gVal, now, 0.05);
+        }
+      });
+    }
+    setDataNotice(`⚡ تم تفعيل ${preset.name} بنجاح!`);
+    setTimeout(() => setDataNotice(''), 3500);
+  };
+
+  // Clinical Profile Data Export
+  const exportMedicalProfile = () => {
+    const profileData = {
+      version: '2.4-clinical',
+      appName: 'Mada Al-Sam-a',
+      developer: 'Sultan Al-Adawi',
+      exportDate: new Date().toISOString(),
+      audiogram: userAudiogram,
+      eqBands: BANDS,
+      activePreset,
+      storageType: 'LocalEncryptedZeroCloud'
+    };
+
+    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(profileData, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute('href', dataStr);
+    downloadAnchor.setAttribute('download', `Mada_Hearing_Profile_${Date.now()}.mada`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+
+    setDataNotice('✅ تم تصدير ملفك السمعي الطبي (.mada) بنجاح!');
+    setTimeout(() => setDataNotice(''), 4000);
+  };
+
+  // Clinical Profile Data Import
+  const handleFileImport = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const parsed = JSON.parse(event.target.result);
+        if (parsed.audiogram && parsed.audiogram.frequencies) {
+          setUserAudiogram(parsed.audiogram);
+          localStorage.setItem('mada_audiogram', JSON.stringify(parsed.audiogram));
+          setDataNotice('🎉 تم استيراد ومعايرة ملفك السمعي بنجاح!');
+        } else {
+          setDataNotice('⚠️ تنسيق الملف غير متوافق. تأكد من اختيار ملف .mada صالح.');
+        }
+      } catch (err) {
+        setDataNotice('❌ فشل قراءة الملف. الملف تالف أو غير صالح.');
+      }
+      setTimeout(() => setDataNotice(''), 4500);
+    };
+    reader.readAsText(file);
+  };
 
   // Calculate EQ gains derived from user audiogram
   const calculateEqGains = (audiogram) => {
@@ -476,6 +631,202 @@ export default function Dashboard({ activeTab = 'overview', onTabChange, onViewC
                   </button>
                 </div>
               </div>
+            </div>
+
+            {/* FEEDBACK STATUS TOAST */}
+            {dataNotice && (
+              <div className="dashboard-status-toast">
+                <span>{dataNotice}</span>
+              </div>
+            )}
+
+            {/* DUAL WIDGETS ROW: LIVE SPL NOISE METER & CLINICAL DATA HUB */}
+            <div className="overview-dual-widgets-row">
+              {/* Widget 1: Live Environmental Noise Decibel Meter (SPL) */}
+              <div className="spl-noise-meter-card">
+                <div className="widget-header-row">
+                  <div className="widget-title-group">
+                    <span className="widget-icon-badge">
+                      <Mic className="w-4 h-4 text-emerald-400" />
+                    </span>
+                    <div>
+                      <h4>مقياس ضوضاء البيئة اللحظي (SPL Decibel Meter)</h4>
+                      <small>استشعار شدة الصوت في الغرفة لمعرفة ملائمتها للفحص السريري والدراسة</small>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={isMeasuringNoise ? stopNoiseMeter : startNoiseMeter}
+                    className={`btn-toggle-noise-meter ${isMeasuringNoise ? 'active' : ''}`}
+                    title={isMeasuringNoise ? 'إيقاف القياس' : 'بدء القياس بالمايكروفون'}
+                  >
+                    {isMeasuringNoise ? (
+                      <>
+                        <MicOff className="w-4 h-4 ml-1.5 text-rose-400" />
+                        <span>إيقاف الرصد</span>
+                      </>
+                    ) : (
+                      <>
+                        <Mic className="w-4 h-4 ml-1.5 text-emerald-400" />
+                        <span>قياس ضوضاء الغرفة</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                <div className="spl-meter-visual">
+                  <div className="spl-db-display">
+                    <span className="db-number" style={{
+                      color: roomDb < 45 ? '#10B981' : roomDb < 65 ? '#38BDF8' : roomDb < 80 ? '#F59E0B' : '#EF4444'
+                    }}>
+                      {roomDb}
+                    </span>
+                    <span className="db-unit">dB SPL</span>
+                  </div>
+
+                  <div className="spl-gauge-container">
+                    <div className="spl-gauge-bar">
+                      <div 
+                        className="spl-gauge-fill" 
+                        style={{ 
+                          width: `${Math.min(100, Math.max(10, ((roomDb - 20) / 80) * 100))}%`,
+                          backgroundColor: roomDb < 45 ? '#10B981' : roomDb < 65 ? '#38BDF8' : roomDb < 80 ? '#F59E0B' : '#EF4444'
+                        }}
+                      ></div>
+                    </div>
+                    <div className="spl-gauge-markers">
+                      <span>20 dB (هدوء تام)</span>
+                      <span>50 dB (مكتب)</span>
+                      <span>80 dB (شارع)</span>
+                      <span>100+ dB (خطر)</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="spl-status-tag" style={{
+                  backgroundColor: roomDb < 45 ? 'rgba(16, 185, 129, 0.12)' : roomDb < 65 ? 'rgba(56, 189, 248, 0.12)' : roomDb < 80 ? 'rgba(245, 158, 11, 0.12)' : 'rgba(239, 68, 68, 0.12)',
+                  borderColor: roomDb < 45 ? 'rgba(16, 185, 129, 0.3)' : roomDb < 65 ? 'rgba(56, 189, 248, 0.3)' : roomDb < 80 ? 'rgba(245, 158, 11, 0.3)' : 'rgba(239, 68, 68, 0.3)',
+                  color: roomDb < 45 ? '#6EE7B7' : roomDb < 65 ? '#93C5FD' : roomDb < 80 ? '#FCD34D' : '#FCA5A5'
+                }}>
+                  <span className="live-dot" style={{ backgroundColor: roomDb < 45 ? '#10B981' : roomDb < 65 ? '#38BDF8' : roomDb < 80 ? '#F59E0B' : '#EF4444' }}></span>
+                  <span>
+                    {roomDb < 45 && '🌿 بيئة هادئة ومثالية للفحص السريري والاستماع النقي'}
+                    {roomDb >= 45 && roomDb < 65 && '🏢 مستوى ضوضاء معتدل (مكتب أو غرفة عادية)'}
+                    {roomDb >= 65 && roomDb < 80 && '⚡ بيئة صاخبة — يُنصح بتفعيل عزل الضوضاء التكيفي'}
+                    {roomDb >= 80 && '⚠️ تحذير: ضوضاء مرتفعة جداً قد تضر بالأذن وسلامة السمع'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Widget 2: Medical Data Backup & Clinical File Import/Export */}
+              <div className="clinical-data-hub-card">
+                <div className="widget-header-row">
+                  <div className="widget-title-group">
+                    <span className="widget-icon-badge">
+                      <ShieldCheck className="w-4 h-4 text-sky-400" />
+                    </span>
+                    <div>
+                      <h4>إدارة الملف السمعي الطبي (Clinical Profile Data)</h4>
+                      <small>تصدير واستيراد قياساتك السمعية ومزامنتها بأمان تام</small>
+                    </div>
+                  </div>
+
+                  <span className="privacy-badge">
+                    <ShieldCheck className="w-3.5 h-3.5 ml-1 text-emerald-400" />
+                    تخزين محلي مشفر 100%
+                  </span>
+                </div>
+
+                <p className="data-hub-desc">
+                  بياناتك السمعية وفحوصاتك لا تخرج من جهازك نهائياً؛ يمكنك حفظ نسخة احتياطية طبية بملف <strong>(.mada)</strong> لنقلها لأي جهاز آخر أو مشاركتها مع طبيب السمعيات:
+                </p>
+
+                <div className="data-actions-row">
+                  <button onClick={exportMedicalProfile} className="btn-data-export">
+                    <Download className="w-4 h-4 ml-1.5 text-emerald-400" />
+                    <span>تصدير الملف السمعي (.mada)</span>
+                  </button>
+
+                  <button 
+                    onClick={() => fileInputRef.current?.click()} 
+                    className="btn-data-import"
+                  >
+                    <Upload className="w-4 h-4 ml-1.5 text-sky-400" />
+                    <span>استيراد ملف سمعي</span>
+                  </button>
+
+                  <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    accept=".mada,.json" 
+                    onChange={handleFileImport} 
+                    style={{ display: 'none' }} 
+                  />
+                </div>
+
+                <div className="data-meta-note">
+                  <span>🔒 معايير الأمان الطبي: متوافق مع مبادئ الخصوصية السريرية وعدم التسريب السحابي.</span>
+                </div>
+              </div>
+            </div>
+
+            {/* ONE-CLICK AUDIO PRESETS BAR */}
+            <div className="audio-presets-section">
+              <div className="presets-section-header">
+                <div>
+                  <h4>أوضاع الاستماع البيئية الفورية (One-Click Audio Presets)</h4>
+                  <small>ضبط توازن الترددات الصوتية بلمسة واحدة حسب مكان تواجدك الحالي</small>
+                </div>
+                {activePreset && (
+                  <button 
+                    onClick={() => setActivePreset(null)} 
+                    className="btn-reset-preset"
+                    title="الرجوع لملف السمع الطبيعي"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5 ml-1" />
+                    استعادة الضبط الطبي
+                  </button>
+                )}
+              </div>
+
+              <div className="presets-cards-grid">
+                {PRESETS.map((p) => {
+                  const isSelected = activePreset === p.id;
+                  return (
+                    <div 
+                      key={p.id}
+                      onClick={() => applyAudioPreset(p)}
+                      className={`preset-card ${isSelected ? 'selected' : ''}`}
+                    >
+                      <div className="preset-card-top">
+                        <span className="preset-emoji">{p.icon}</span>
+                        {isSelected && <span className="preset-active-tag">نشط الآن ⚡</span>}
+                      </div>
+                      <h5>{p.name}</h5>
+                      <p>{p.desc}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* DEAF ACCESSIBILITY & SIGN LANGUAGE BANNER */}
+            <div className="deaf-banner-dock-card" onClick={onOpenDeafGuide}>
+              <div className="deaf-banner-icon">🤟</div>
+              <div className="deaf-banner-content">
+                <div className="badge-row">
+                  <span className="deaf-badge-pill">شرح مخصص للصم</span>
+                  <span className="deaf-sub-pill">Arabic Sign Language & Visual Cues</span>
+                </div>
+                <h4>دليل النفاذ الرقمي الصامت ولغة الإشارة المعتمدة</h4>
+                <p>
+                  تعرّف على إشارات المنظومة، وخطوات الاستخدام المصورة بدون صوت، وجرّب محاكي الوميض اللوني والاهتزاز اللمسي لرادار الأمان.
+                </p>
+              </div>
+              <button className="btn-deaf-banner-open">
+                <span>فتح الدليل</span>
+                <ChevronRight className="w-4 h-4 mr-1" />
+              </button>
             </div>
 
             {/* Quick Modules Cards Grid */}

@@ -3,11 +3,13 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import LandingPage from './components/LandingPage';
 import Dashboard from './components/Dashboard';
+import DeafGuideModal from './components/DeafGuideModal';
 
 function App() {
   const [view, setView] = useState('landing');
   const [activeTab, setActiveTab] = useState('overview');
   const [highContrast, setHighContrast] = useState(false);
+  const [isDeafGuideOpen, setIsDeafGuideOpen] = useState(false);
 
   useEffect(() => {
     const handleHash = () => {
@@ -56,21 +58,32 @@ function App() {
         onTabChange={handleTabChange}
         highContrast={highContrast}
         onToggleContrast={() => setHighContrast(prev => !prev)}
+        onOpenDeafGuide={() => setIsDeafGuideOpen(true)}
       />
 
       <main className="mada-main-content">
         {view === 'landing' ? (
-          <LandingPage onViewChange={handleViewChange} />
+          <LandingPage 
+            onViewChange={handleViewChange}
+            onOpenDeafGuide={() => setIsDeafGuideOpen(true)} 
+          />
         ) : (
           <Dashboard
             activeTab={activeTab}
             onTabChange={setActiveTab}
             onViewChange={handleViewChange}
+            onOpenDeafGuide={() => setIsDeafGuideOpen(true)}
           />
         )}
       </main>
 
       <Footer onViewChange={handleViewChange} />
+
+      {/* Global Deaf Accessibility & Sign Language Modal */}
+      <DeafGuideModal 
+        isOpen={isDeafGuideOpen} 
+        onClose={() => setIsDeafGuideOpen(false)} 
+      />
     </div>
   );
 }

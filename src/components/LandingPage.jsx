@@ -6,8 +6,9 @@ import {
   BarChart2, ShieldCheck, ChevronRight, Sliders, Eye
 } from 'lucide-react';
 import MadaLogo from './MadaLogo';
+import VideoShowcase from './VideoShowcase';
 
-export default function LandingPage({ onViewChange }) {
+export default function LandingPage({ onViewChange, onOpenDeafGuide }) {
   const [currentCaption, setCurrentCaption] = useState(0);
   const [eqHeights, setEqHeights] = useState([12, 24, 8, 16, 20, 14, 28, 10, 18]);
   const [simMode, setSimMode] = useState('mada'); // 'normal', 'loss', 'mada'
@@ -161,6 +162,12 @@ export default function LandingPage({ onViewChange }) {
           </div>
         </div>
       </section>
+
+      {/* ========== VIDEO & INTERACTIVE SHOWCASE SECTION ========== */}
+      <VideoShowcase 
+        onOpenDeafGuide={onOpenDeafGuide} 
+        onViewChange={onViewChange} 
+      />
 
       {/* ========== PROBLEM SECTION ========== */}
       <section className="problem-section" id="problem">
