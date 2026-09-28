@@ -15,13 +15,14 @@ import {
  * 5. خلو تام من أي ذكر لمسابقات، مع تثبيت الهوية الرسمية:
  *    تطوير وابتكار: سلطان العدوي — مهندس برمجيات.
  */
-export default function LogoMotionIntro({ isOpen, onClose }) {
+export default function LogoMotionIntro({ isOpen, isSplashMode = false, onClose }) {
   const [isPlaying, setIsPlaying] = useState(true);
   const [progress, setProgress] = useState(0); // 0 to 1
   const [isMuted, setIsMuted] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);
   const [downloadUrl, setDownloadUrl] = useState(null);
+  const [isClosing, setIsClosing] = useState(false);
 
   const canvasRef = useRef(null);
   const animFrameRef = useRef(null);
@@ -31,6 +32,14 @@ export default function LogoMotionIntro({ isOpen, onClose }) {
   const isMutedRef = useRef(false);
 
   const TOTAL_DURATION = 4200; // 4.2 seconds
+
+  const handleCloseWithFade = useCallback(() => {
+    setIsClosing(true);
+    setTimeout(() => {
+      setIsClosing(false);
+      onClose();
+    }, 450);
+  }, [onClose]);
 
   // Synchronize refs
   useEffect(() => {
@@ -435,6 +444,12 @@ export default function LogoMotionIntro({ isOpen, onClose }) {
         animFrameRef.current = requestAnimationFrame(loop);
       } else if (currentProgress >= 1) {
         setIsPlaying(false);
+        if (isSplashMode) {
+          // Linger 1.2s to admire the final glowing emblem, then smoothly dissolve into the website!
+          setTimeout(() => {
+            handleCloseWithFade();
+          }, 1200);
+        }
       }
     };
 
@@ -443,7 +458,35 @@ export default function LogoMotionIntro({ isOpen, onClose }) {
     return () => {
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
     };
-  }, [isOpen, playLogoAudio, renderFrame]);
+  }, [isOpen, isSplashMode, playLogoAudio, renderFrame, handleCloseWithFade]);
+
+  // Handle user gesture for audio unlock and escape key
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKey = (e) => {
+      if (e.key === 'Escape' || (isSplashMode && (e.key === ' ' || e.key === 'Enter'))) {
+        handleCloseWithFade();
+      }
+    };
+
+    const handleGesture = () => {
+      if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
+        audioCtxRef.current.resume();
+        playLogoAudio();
+      }
+    };
+
+    window.addEventListener('keydown', handleKey);
+    window.addEventListener('click', handleGesture);
+    window.addEventListener('touchstart', handleGesture);
+
+    return () => {
+      window.removeEventListener('keydown', handleKey);
+      window.removeEventListener('click', handleGesture);
+      window.removeEventListener('touchstart', handleGesture);
+    };
+  }, [isOpen, isSplashMode, handleCloseWithFade, playLogoAudio]);
 
   // Replay animation
   const handleReplay = () => {
@@ -542,8 +585,8 @@ export default function LogoMotionIntro({ isOpen, onClose }) {
   if (!isOpen) return null;
 
   return (
-    <div className="logo-cinema-overlay" role="dialog" aria-modal="true">
-      <div className="logo-cinema-backdrop" onClick={onClose} />
+    <div className={`logo-cinema-overlay ${isSplashMode ? 'splash-mode' : ''} ${isClosing ? 'splash-fade-out' : ''}`} role="dialog" aria-modal="true">
+      <div className="logo-cinema-backdrop" onClick={handleCloseWithFade} />
 
       <div className="logo-cinema-container">
         {/* Cinema Header */}
@@ -551,17 +594,29 @@ export default function LogoMotionIntro({ isOpen, onClose }) {
           <div className="cinema-brand-title">
             <Sparkles className="w-5 h-5 text-teal-400 ml-2" />
             <div>
-              <h3>المسرح السينمائي لشعار «مدى السمع»</h3>
-              <p>الهوية البصرية والموشن جرافيك الرسمي بدقة 4K فائقة الوضوح</p>
+              <h3>{isSplashMode ? 'منظومة «مَدَى السَّمْع»' : 'المسرح السينمائي لشعار «مدى السمع»'}</h3>
+              <p>{isSplashMode ? 'طبقة الوصول الصوتي الذكي • تطوير وابتكار: سلطان العدوي' : 'الهوية البصرية والموشن جرافيك الرسمي بدقة 4K فائقة الوضوح'}</p>
             </div>
           </div>
-          <button 
-            onClick={onClose} 
-            className="btn-cinema-close"
-            title="إغلاق المسرح"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          
+          <div className="cinema-header-actions">
+            {isSplashMode && (
+              <button 
+                onClick={handleCloseWithFade} 
+                className="btn-cinema-skip"
+                title="تخطي المقدمة والدخول المباشر للمنصة"
+              >
+                <span>تخطي للموقع ⏩</span>
+              </button>
+            )}
+            <button 
+              onClick={handleCloseWithFade} 
+              className="btn-cinema-close"
+              title={isSplashMode ? 'دخول الموقع' : 'إغلاق المسرح'}
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Cinema Screen (Canvas 16:9 Viewport) */}

@@ -7607,6 +7607,46 @@ body {
   animation: cinemaFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+.splash-fade-out {
+  animation: splashDissolve 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+}
+
+@keyframes splashDissolve {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.03);
+    pointer-events: none;
+  }
+}
+
+.cinema-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-cinema-skip {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.25) 0%, rgba(0, 212, 170, 0.25) 100%);
+  border: 1px solid rgba(56, 189, 248, 0.5);
+  color: #FFFFFF;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 0 15px rgba(56, 189, 248, 0.2);
+}
+.btn-cinema-skip:hover {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.4) 0%, rgba(0, 212, 170, 0.4) 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 18px rgba(56, 189, 248, 0.4);
+}
+
 .logo-cinema-backdrop {
   position: absolute;
   inset: 0;

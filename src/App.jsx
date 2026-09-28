@@ -11,7 +11,14 @@ function App() {
   const [activeTab, setActiveTab] = useState('overview');
   const [highContrast, setHighContrast] = useState(false);
   const [isDeafGuideOpen, setIsDeafGuideOpen] = useState(false);
-  const [isLogoMotionOpen, setIsLogoMotionOpen] = useState(false);
+  // Auto-launch official logo motion cinema splash on initial load or refresh!
+  const [isLogoMotionOpen, setIsLogoMotionOpen] = useState(true);
+  const [isSplashMode, setIsSplashMode] = useState(true);
+
+  const handleOpenLogoMotionManual = () => {
+    setIsSplashMode(false);
+    setIsLogoMotionOpen(true);
+  };
 
   useEffect(() => {
     const handleHash = () => {
@@ -61,7 +68,7 @@ function App() {
         highContrast={highContrast}
         onToggleContrast={() => setHighContrast(prev => !prev)}
         onOpenDeafGuide={() => setIsDeafGuideOpen(true)}
-        onOpenLogoMotion={() => setIsLogoMotionOpen(true)}
+        onOpenLogoMotion={handleOpenLogoMotionManual}
       />
 
       <main className="mada-main-content">
@@ -69,7 +76,7 @@ function App() {
           <LandingPage 
             onViewChange={handleViewChange}
             onOpenDeafGuide={() => setIsDeafGuideOpen(true)}
-            onOpenLogoMotion={() => setIsLogoMotionOpen(true)}
+            onOpenLogoMotion={handleOpenLogoMotionManual}
           />
         ) : (
           <Dashboard
@@ -77,7 +84,7 @@ function App() {
             onTabChange={setActiveTab}
             onViewChange={handleViewChange}
             onOpenDeafGuide={() => setIsDeafGuideOpen(true)}
-            onOpenLogoMotion={() => setIsLogoMotionOpen(true)}
+            onOpenLogoMotion={handleOpenLogoMotionManual}
           />
         )}
       </main>
@@ -93,6 +100,7 @@ function App() {
       {/* Official 4K Logo Motion Cinema & Video Downloader */}
       <LogoMotionIntro 
         isOpen={isLogoMotionOpen} 
+        isSplashMode={isSplashMode}
         onClose={() => setIsLogoMotionOpen(false)} 
       />
     </div>
