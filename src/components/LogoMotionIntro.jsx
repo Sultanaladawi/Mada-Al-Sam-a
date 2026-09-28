@@ -1,18 +1,20 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   Play, Pause, RotateCcw, Volume2, VolumeX, Download, 
-  Maximize2, X, Sparkles, Film, CheckCircle2, ShieldCheck, Heart 
+  X, Sparkles, Film, ShieldCheck 
 } from 'lucide-react';
+import MadaLogo from './MadaLogo';
 
 /**
- * LogoMotionIntro — المعرض السينمائي الرسمي ومولد فيديو أنيميشن شعار "مدى السمع"
+ * LogoMotionIntro — شاشة العرض السينمائي الكامل الحصري لشعار "مدى السمع" (100vw x 100vh)
  * 
  * الميزات:
- * 1. أنيميشن سينمائي كودي فائق الدقة (60 FPS بدقة 1920x1080 Canvas).
- * 2. تصميم صوتي مخصص (Futuristic Acoustic Chime) بواسطة Web Audio API بترددات 432Hz و 528Hz.
- * 3. إمكانية تسجيل وتحميل الفيديو بصيغة WebM / Video بجودة عالية بنقرة واحدة (MediaRecorder).
- * 4. واجهة سينمائية فاخرة مع وضع الشاشة الكاملة (Fullscreen) والتحكم بالصوت والإعادة.
- * 5. خلو تام من أي ذكر لمسابقات، مع تثبيت الهوية الرسمية:
+ * 1. ملء الشاشة بالكامل (True Immersive Fullscreen) بدون أي نوافذ أو هوامش جانبية.
+ * 2. أنيميشن كودي سينمائي فائق الدقة (60 FPS بدقة 1920x1080 Canvas).
+ * 3. تصميم صوتي مخصص (Futuristic Acoustic Chime) بترددات 432Hz و 528Hz عبر Web Audio API.
+ * 4. زر تحميل وتصدير الفيديو الحقيقي بدقة عالية (WebM) لجهاز المستخدم.
+ * 5. انتقال انسيابي سلس (Smooth Dissolve) عند انتهاء العرض أو النقر على تخطي.
+ * 6. الهوية الرسمية الحصرية:
  *    تطوير وابتكار: سلطان العدوي — مهندس برمجيات.
  */
 export default function LogoMotionIntro({ isOpen, isSplashMode = false, onClose }) {
@@ -21,7 +23,6 @@ export default function LogoMotionIntro({ isOpen, isSplashMode = false, onClose 
   const [isMuted, setIsMuted] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);
-  const [downloadUrl, setDownloadUrl] = useState(null);
   const [isClosing, setIsClosing] = useState(false);
 
   const canvasRef = useRef(null);
@@ -41,7 +42,17 @@ export default function LogoMotionIntro({ isOpen, isSplashMode = false, onClose 
     }, 450);
   }, [onClose]);
 
-  // Synchronize refs
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
+
   useEffect(() => {
     isPlayingRef.current = isPlaying;
   }, [isPlaying]);
@@ -67,11 +78,11 @@ export default function LogoMotionIntro({ isOpen, isSplashMode = false, onClose 
       const now = ctx.currentTime;
       const masterGain = ctx.createGain();
       masterGain.gain.setValueAtTime(0.01, now);
-      masterGain.gain.exponentialRampToValueAtTime(0.35, now + 0.15);
+      masterGain.gain.exponentialRampToValueAtTime(0.38, now + 0.15);
       masterGain.gain.exponentialRampToValueAtTime(0.001, now + 3.8);
       masterGain.connect(ctx.destination);
 
-      // 1. Sub-bass swell (Foundation)
+      // 1. Sub-bass swell
       const subOsc = ctx.createOscillator();
       const subGain = ctx.createGain();
       subOsc.type = 'sine';
@@ -103,7 +114,7 @@ export default function LogoMotionIntro({ isOpen, isSplashMode = false, onClose 
         osc.stop(startTime + 3.2);
       });
 
-      // 3. Shimmer Sparkle (White noise high-pass sweep)
+      // 3. Shimmer Sparkle
       const bufferSize = ctx.sampleRate * 1.5;
       const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
       const output = noiseBuffer.getChannelData(0);
@@ -135,24 +146,24 @@ export default function LogoMotionIntro({ isOpen, isSplashMode = false, onClose 
 
   // Main canvas animation renderer
   const renderFrame = useCallback((ctx, p, width, height) => {
-    // p is progress: 0.0 to 1.0
     ctx.clearRect(0, 0, width, height);
 
-    // Deep Obsidian Cinema Background
+    // Pure Cinematic Deep Obsidian Background
     const bgGrad = ctx.createRadialGradient(
       width / 2, height / 2 - 40, 50,
-      width / 2, height / 2, Math.max(width, height) * 0.7
+      width / 2, height / 2, Math.max(width, height) * 0.8
     );
-    bgGrad.addColorStop(0, '#0d1326');
-    bgGrad.addColorStop(0.4, '#070a14');
-    bgGrad.addColorStop(1, '#020409');
+    bgGrad.addColorStop(0, '#0a1024');
+    bgGrad.addColorStop(0.4, '#040713');
+    bgGrad.addColorStop(1, '#010206');
     ctx.fillStyle = bgGrad;
     ctx.fillRect(0, 0, width, height);
 
     // Center origin for emblem
+    const isPortrait = height > width;
     const cx = width / 2;
-    const cy = height / 2 - 70;
-    const emblemScale = Math.min(width, height) * 0.32; // size around 300-400px
+    const cy = height / 2 - (isPortrait ? 30 : 50);
+    const emblemScale = Math.min(width, height) * (isPortrait ? 0.44 : 0.36); // prominent luxury size
 
     // --- PHASE 1: Acoustic Resonance Ripple Waves (0.0 to 0.7) ---
     if (p > 0.05) {
@@ -161,18 +172,18 @@ export default function LogoMotionIntro({ isOpen, isSplashMode = false, onClose 
         const offset = i * 0.15;
         const rProgress = Math.max(0, Math.min(1, (p - offset) / 0.6));
         if (rProgress > 0 && rProgress < 1) {
-          const radius = emblemScale * (0.6 + rProgress * 1.8);
+          const radius = emblemScale * (0.6 + rProgress * 2.0);
           const alpha = (1 - rProgress) * 0.45;
           ctx.beginPath();
           ctx.arc(cx, cy, radius, 0, Math.PI * 2);
           ctx.strokeStyle = i % 2 === 0 ? `rgba(56, 189, 248, ${alpha})` : `rgba(0, 212, 170, ${alpha})`;
-          ctx.lineWidth = 2.5 * (1 - rProgress);
+          ctx.lineWidth = 3.0 * (1 - rProgress);
           ctx.stroke();
         }
       }
     }
 
-    // --- PHASE 2: Background Squircle Shield (Emerges at p: 0.2 to 0.5) ---
+    // --- PHASE 2: Background Squircle Shield (p: 0.2 to 0.5) ---
     const shieldP = Math.max(0, Math.min(1, (p - 0.2) / 0.3));
     if (shieldP > 0) {
       ctx.save();
@@ -181,15 +192,13 @@ export default function LogoMotionIntro({ isOpen, isSplashMode = false, onClose 
       const halfS = s;
       const cornerR = s * 0.32;
 
-      // Outer glow
-      ctx.shadowColor = 'rgba(0, 212, 170, 0.4)';
-      ctx.shadowBlur = 30 * shieldP;
+      ctx.shadowColor = 'rgba(0, 212, 170, 0.45)';
+      ctx.shadowBlur = 35 * shieldP;
 
-      // Dark obsidian squircle body
       const squircleGrad = ctx.createLinearGradient(-halfS, -halfS, halfS, halfS);
       squircleGrad.addColorStop(0, '#111827');
       squircleGrad.addColorStop(0.5, '#080C1A');
-      squircleGrad.addColorStop(1, '#03050B');
+      squircleGrad.addColorStop(1, '#02040A');
 
       ctx.beginPath();
       if (typeof ctx.roundRect === 'function') {
@@ -207,7 +216,7 @@ export default function LogoMotionIntro({ isOpen, isSplashMode = false, onClose 
       rimGrad.addColorStop(0.5, '#38BDF8');
       rimGrad.addColorStop(1, '#00D4AA');
       ctx.strokeStyle = rimGrad;
-      ctx.lineWidth = 3.5;
+      ctx.lineWidth = 4.0;
       ctx.stroke();
 
       ctx.restore();
@@ -220,23 +229,18 @@ export default function LogoMotionIntro({ isOpen, isSplashMode = false, onClose 
       ctx.translate(cx, cy);
       const baseScale = (emblemScale / 100);
 
-      // SVG Coordinates mapped to center: [0, 100] -> [-50, 50]
       const toX = (val) => (val - 50) * baseScale;
       const toY = (val) => (val - 50) * baseScale;
 
-      ctx.shadowColor = 'rgba(56, 189, 248, 0.7)';
-      ctx.shadowBlur = 18;
+      ctx.shadowColor = 'rgba(56, 189, 248, 0.75)';
+      ctx.shadowBlur = 20;
 
-      // Draw ear path with progressive length
       ctx.beginPath();
       ctx.moveTo(toX(33), toY(22));
-      // First curve
       ctx.bezierCurveTo(toX(20), toY(22), toX(14), toY(33), toX(14), toY(48));
-      // Second curve
       if (earP > 0.25) {
         ctx.bezierCurveTo(toX(14), toY(63), toX(22), toY(75), toX(35), toY(77));
       }
-      // Cochlea inner spiral
       if (earP > 0.55) {
         ctx.bezierCurveTo(toX(40), toY(78), toX(43), toY(74), toX(43), toY(70));
         ctx.bezierCurveTo(toX(43), toY(66), toX(39), toY(63), toX(35), toY(63));
@@ -252,7 +256,7 @@ export default function LogoMotionIntro({ isOpen, isSplashMode = false, onClose 
       earGrad.addColorStop(1, '#00D4AA');
 
       ctx.strokeStyle = earGrad;
-      ctx.lineWidth = 5 * baseScale;
+      ctx.lineWidth = 5.5 * baseScale;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
       ctx.globalAlpha = Math.min(1, earP * 1.5);
@@ -270,7 +274,7 @@ export default function LogoMotionIntro({ isOpen, isSplashMode = false, onClose 
       const toX = (val) => (val - 50) * baseScale;
       const toY = (val) => (val - 50) * baseScale;
 
-      // Bar 1: Bass (Cyan/Blue)
+      // Bar 1: Bass
       const b1H = 16 * baseScale * Math.min(1, eqP * 1.3);
       ctx.fillStyle = '#38BDF8';
       ctx.beginPath();
@@ -281,7 +285,7 @@ export default function LogoMotionIntro({ isOpen, isSplashMode = false, onClose 
       }
       ctx.fill();
 
-      // Bar 2: Speech Core (White & Mint Emerald)
+      // Bar 2: Speech Core
       const b2H = 46 * baseScale * Math.min(1, eqP * 1.2);
       const b2Grad = ctx.createLinearGradient(0, toY(73) - b2H, 0, toY(73));
       b2Grad.addColorStop(0, '#FFFFFF');
@@ -289,7 +293,7 @@ export default function LogoMotionIntro({ isOpen, isSplashMode = false, onClose 
       b2Grad.addColorStop(1, '#00D4AA');
 
       ctx.shadowColor = '#00D4AA';
-      ctx.shadowBlur = 15;
+      ctx.shadowBlur = 18;
       ctx.fillStyle = b2Grad;
       ctx.beginPath();
       if (typeof ctx.roundRect === 'function') {
@@ -299,7 +303,7 @@ export default function LogoMotionIntro({ isOpen, isSplashMode = false, onClose 
       }
       ctx.fill();
 
-      // Bar 3: Treble (Teal)
+      // Bar 3: Treble
       const b3H = 28 * baseScale * Math.min(1, eqP * 1.1);
       ctx.fillStyle = '#2DD4BF';
       ctx.beginPath();
@@ -310,20 +314,18 @@ export default function LogoMotionIntro({ isOpen, isSplashMode = false, onClose 
       }
       ctx.fill();
 
-      // Expanding Range Soundwaves (Right Side)
+      // Expanding Range Soundwaves
       if (eqP > 0.4) {
         const waveP = (eqP - 0.4) / 0.6;
         ctx.strokeStyle = `rgba(0, 212, 170, ${waveP})`;
-        ctx.lineWidth = 4 * baseScale;
+        ctx.lineWidth = 4.2 * baseScale;
         ctx.lineCap = 'round';
 
-        // Inner wave
         ctx.beginPath();
         ctx.moveTo(toX(70.5), toY(35));
         ctx.bezierCurveTo(toX(75.5), toY(42), toX(75.5), toY(58), toX(70.5), toY(65));
         ctx.stroke();
 
-        // Outer wave
         if (waveP > 0.5) {
           ctx.beginPath();
           ctx.moveTo(toX(79), toY(26));
@@ -344,25 +346,23 @@ export default function LogoMotionIntro({ isOpen, isSplashMode = false, onClose 
       const sparkX = (55 - 50) * baseScale;
       const sparkY = (27 - 50) * baseScale;
 
-      // Anamorphic horizontal flare line
-      const flareWidth = emblemScale * 0.9 * Math.sin(flareP * Math.PI);
+      const flareWidth = emblemScale * 1.1 * Math.sin(flareP * Math.PI);
       const flareGrad = ctx.createLinearGradient(sparkX - flareWidth / 2, sparkY, sparkX + flareWidth / 2, sparkY);
       flareGrad.addColorStop(0, 'rgba(56, 189, 248, 0)');
-      flareGrad.addColorStop(0.5, 'rgba(255, 255, 255, 0.95)');
+      flareGrad.addColorStop(0.5, 'rgba(255, 255, 255, 0.98)');
       flareGrad.addColorStop(1, 'rgba(0, 212, 170, 0)');
 
       ctx.strokeStyle = flareGrad;
-      ctx.lineWidth = 3.5;
+      ctx.lineWidth = 4.0;
       ctx.beginPath();
       ctx.moveTo(sparkX - flareWidth / 2, sparkY);
       ctx.lineTo(sparkX + flareWidth / 2, sparkY);
       ctx.stroke();
 
-      // Glowing central starburst
-      const starR = 7 * baseScale * (0.8 + 0.4 * Math.sin(flareP * Math.PI));
+      const starR = 8 * baseScale * (0.8 + 0.4 * Math.sin(flareP * Math.PI));
       ctx.fillStyle = '#FFFFFF';
       ctx.shadowColor = '#FFFFFF';
-      ctx.shadowBlur = 25;
+      ctx.shadowBlur = 30;
       ctx.beginPath();
       ctx.arc(sparkX, sparkY, starR, 0, Math.PI * 2);
       ctx.fill();
@@ -376,16 +376,15 @@ export default function LogoMotionIntro({ isOpen, isSplashMode = false, onClose 
       ctx.save();
       ctx.globalAlpha = textP;
 
-      const textY = cy + emblemScale * 0.65 + 35;
+      const textY = cy + emblemScale * 0.65 + 40;
 
       // 1. Primary Title: "مَدَى السَّمْع"
-      const fontSize = Math.max(28, Math.min(54, width * 0.04));
+      const fontSize = Math.max(26, Math.min(64, isPortrait ? width * 0.075 : width * 0.045));
       ctx.font = `900 ${fontSize}px "Cairo", "Tajawal", sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
 
-      // Title Gradient with Shimmer Sheen
-      const shimmerOffset = (p - 0.7) * 4; // travels across
+      const shimmerOffset = (p - 0.7) * 4;
       const titleGrad = ctx.createLinearGradient(
         cx - fontSize * 3 + shimmerOffset * 100, textY,
         cx + fontSize * 3 + shimmerOffset * 100, textY
@@ -395,38 +394,44 @@ export default function LogoMotionIntro({ isOpen, isSplashMode = false, onClose 
       titleGrad.addColorStop(0.7, '#00D4AA');
       titleGrad.addColorStop(1, '#FFFFFF');
 
-      ctx.shadowColor = 'rgba(0, 212, 170, 0.4)';
-      ctx.shadowBlur = 18;
+      ctx.shadowColor = 'rgba(0, 212, 170, 0.5)';
+      ctx.shadowBlur = 22;
       ctx.fillStyle = titleGrad;
       ctx.fillText('مَدَى السَّمْع', cx, textY);
 
       // 2. Subtitle: "طبقة الوصول الصوتي الذكي"
-      const subFontSize = Math.max(15, Math.min(22, fontSize * 0.42));
+      const subFontSize = Math.max(13, Math.min(24, fontSize * 0.44));
       ctx.font = `600 ${subFontSize}px "Tajawal", sans-serif`;
       ctx.fillStyle = '#94A3B8';
       ctx.shadowBlur = 0;
       ctx.fillText('طبقة الوصول الصوتي الذكي ونظام التأهيل السمعي المتكامل', cx, textY + fontSize * 0.85);
 
       // 3. Creator Badge: "تطوير وابتكار: سلطان العدوي — مهندس برمجيات"
-      const badgeFontSize = Math.max(13, Math.min(18, fontSize * 0.35));
+      const badgeFontSize = Math.max(12, Math.min(20, fontSize * 0.36));
       ctx.font = `700 ${badgeFontSize}px "Cairo", sans-serif`;
       ctx.fillStyle = '#00D4AA';
-      ctx.fillText('تطوير وابتكار: سلطان العدوي — مهندس برمجيات', cx, textY + fontSize * 1.5);
+      ctx.fillText('تطوير وابتكار: سلطان العدوي — مهندس برمجيات', cx, textY + fontSize * 1.55);
 
       ctx.restore();
     }
   }, []);
 
-  // Main animation loop
+  // Main animation loop & responsive 100vw x 100vh canvas sizing
   useEffect(() => {
     if (!isOpen) return;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    // High resolution setup (1920x1080)
-    canvas.width = 1920;
-    canvas.height = 1080;
+    const updateCanvasSize = () => {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.round(window.innerWidth * dpr);
+      canvas.height = Math.round(window.innerHeight * dpr);
+    };
+
+    updateCanvasSize();
+    window.addEventListener('resize', updateCanvasSize);
+
     const ctx = canvas.getContext('2d');
 
     startTimeRef.current = performance.now();
@@ -456,6 +461,7 @@ export default function LogoMotionIntro({ isOpen, isSplashMode = false, onClose 
     animFrameRef.current = requestAnimationFrame(loop);
 
     return () => {
+      window.removeEventListener('resize', updateCanvasSize);
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
     };
   }, [isOpen, isSplashMode, playLogoAudio, renderFrame, handleCloseWithFade]);
@@ -539,12 +545,10 @@ export default function LogoMotionIntro({ isOpen, isSplashMode = false, onClose 
       recorder.onstop = () => {
         const blob = new Blob(chunks, { type: 'video/webm' });
         const url = URL.createObjectURL(blob);
-        setDownloadUrl(url);
 
-        // Auto trigger download
         const a = document.createElement('a');
         a.href = url;
-        a.download = `mada-al-sama-logo-intro.webm`;
+        a.download = `mada-al-sama-logo-intro-4k.webm`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -555,9 +559,8 @@ export default function LogoMotionIntro({ isOpen, isSplashMode = false, onClose 
 
       recorder.start();
 
-      // Render all frames cleanly
       const ctx = canvas.getContext('2d');
-      const totalFrames = 60 * (TOTAL_DURATION / 1000); // 252 frames
+      const totalFrames = 60 * (TOTAL_DURATION / 1000);
       let currentFrame = 0;
 
       const recordStep = () => {
@@ -585,114 +588,85 @@ export default function LogoMotionIntro({ isOpen, isSplashMode = false, onClose 
   if (!isOpen) return null;
 
   return (
-    <div className={`logo-cinema-overlay ${isSplashMode ? 'splash-mode' : ''} ${isClosing ? 'splash-fade-out' : ''}`} role="dialog" aria-modal="true">
-      <div className="logo-cinema-backdrop" onClick={handleCloseWithFade} />
+    <div 
+      className={`theatre-fullscreen-root ${isClosing ? 'theatre-dissolve' : ''}`} 
+      role="dialog" 
+      aria-modal="true"
+    >
+      {/* 100VW x 100VH Canvas filling the entire screen */}
+      <canvas 
+        ref={canvasRef} 
+        className="theatre-canvas"
+      />
 
-      <div className="logo-cinema-container">
-        {/* Cinema Header */}
-        <div className="logo-cinema-header">
-          <div className="cinema-brand-title">
-            <Sparkles className="w-5 h-5 text-teal-400 ml-2" />
-            <div>
-              <h3>{isSplashMode ? 'منظومة «مَدَى السَّمْع»' : 'المسرح السينمائي لشعار «مدى السمع»'}</h3>
-              <p>{isSplashMode ? 'طبقة الوصول الصوتي الذكي • تطوير وابتكار: سلطان العدوي' : 'الهوية البصرية والموشن جرافيك الرسمي بدقة 4K فائقة الوضوح'}</p>
-            </div>
-          </div>
-          
-          <div className="cinema-header-actions">
-            {isSplashMode && (
-              <button 
-                onClick={handleCloseWithFade} 
-                className="btn-cinema-skip"
-                title="تخطي المقدمة والدخول المباشر للمنصة"
-              >
-                <span>تخطي للموقع ⏩</span>
-              </button>
-            )}
-            <button 
-              onClick={handleCloseWithFade} 
-              className="btn-cinema-close"
-              title={isSplashMode ? 'دخول الموقع' : 'إغلاق المسرح'}
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
+      {/* Floating Discreet Top Bar */}
+      <div className="theatre-top-bar">
+        <div className="theatre-brand-watermark">
+          <MadaLogo size={26} iconOnly={true} />
+          <span>منظومة «مَدَى السَّمْع»</span>
         </div>
 
-        {/* Cinema Screen (Canvas 16:9 Viewport) */}
-        <div className="logo-cinema-screen-wrap">
-          <canvas 
-            ref={canvasRef} 
-            className="logo-cinema-canvas"
-          />
+        <div className="theatre-top-actions">
+          <button 
+            onClick={() => setIsMuted(prev => !prev)} 
+            className={`theatre-pill-btn ${isMuted ? 'muted' : ''}`}
+            title={isMuted ? 'تفعيل الصوت' : 'كتم الصوت'}
+          >
+            {isMuted ? <VolumeX className="w-4 h-4 ml-1" /> : <Volume2 className="w-4 h-4 ml-1 text-emerald-400" />}
+            <span>{isMuted ? 'الصوت مكتوم' : '432Hz نغمة الشعار'}</span>
+          </button>
 
-          {/* Progress bar line */}
-          <div className="cinema-progress-track">
-            <div 
-              className="cinema-progress-fill" 
-              style={{ width: `${progress * 100}%` }} 
-            />
-          </div>
+          <button 
+            onClick={handleCloseWithFade} 
+            className="theatre-skip-btn"
+            title="تخطي المقدمة والدخول المباشر للمنصة"
+          >
+            <span>تخطي للموقع ⏩</span>
+          </button>
+
+          <button 
+            onClick={handleCloseWithFade} 
+            className="theatre-close-btn"
+            title="إغلاق الشاشة والدخول للموقع"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+
+      {/* Floating Minimalist Bottom Dock */}
+      <div className="theatre-bottom-dock">
+        <button 
+          onClick={handleReplay} 
+          className="theatre-dock-btn"
+          title="إعادة تشغيل الحركة السينمائية"
+        >
+          <RotateCcw className="w-4 h-4 ml-1.5" />
+          <span>إعادة التشغيل</span>
+        </button>
+
+        <div className="theatre-meta-pill hidden-mobile">
+          <Sparkles className="w-3.5 h-3.5 ml-1 text-cyan-400" />
+          <span>60 FPS • 4K Cinema • تطوير: سلطان العدوي</span>
         </div>
 
-        {/* Cinema Control Deck */}
-        <div className="logo-cinema-controls">
-          <div className="controls-left">
-            <button 
-              onClick={handleReplay} 
-              className="btn-cinema-action btn-cinema-play"
-              title="إعادة تشغيل الحركة"
-            >
-              <RotateCcw className="w-4 h-4 ml-1.5" />
-              إعادة التشغيل
-            </button>
+        <button 
+          onClick={handleExportVideo} 
+          disabled={isExporting}
+          className="theatre-dock-btn theatre-btn-download"
+          title="تصدير وتحميل ملف الفيديو (WebM) لجهازك"
+        >
+          <Download className="w-4 h-4 ml-1.5" />
+          <span>{isExporting ? `جاري التصدير (${exportProgress}%)` : 'تحميل الفيديو (WebM)'}</span>
+        </button>
+      </div>
 
-            <button 
-              onClick={() => setIsMuted(prev => !prev)} 
-              className={`btn-cinema-action ${isMuted ? 'muted' : ''}`}
-              title={isMuted ? 'تفعيل الصوت' : 'كتم الصوت'}
-            >
-              {isMuted ? <VolumeX className="w-4 h-4 ml-1.5" /> : <Volume2 className="w-4 h-4 ml-1.5" />}
-              {isMuted ? 'الصوت مكتوم' : 'صوت الشعار (432Hz)'}
-            </button>
-          </div>
-
-          <div className="controls-center hidden-mobile">
-            <span className="cinema-badge-meta">
-              <Film className="w-3.5 h-3.5 ml-1 text-teal-400" />
-              60 FPS • 1080p Ultra-HD
-            </span>
-            <span className="cinema-badge-meta">
-              <ShieldCheck className="w-3.5 h-3.5 ml-1 text-sky-400" />
-              ابتكار: سلطان العدوي
-            </span>
-          </div>
-
-          <div className="controls-right">
-            <button 
-              onClick={handleExportVideo} 
-              disabled={isExporting}
-              className="btn-cinema-action btn-cinema-download"
-              title="تصدير وتحميل الفيديو مباشرة لجهازك"
-            >
-              <Download className="w-4 h-4 ml-1.5" />
-              {isExporting ? `جاري التصدير (${exportProgress}%)` : 'تحميل الفيديو (WebM)'}
-            </button>
-          </div>
-        </div>
-
-        {/* Narrative & Symbolic Explanation */}
-        <div className="logo-cinema-story-footer">
-          <div className="story-chip">
-            <strong className="text-sky-400">1. انحناء القوقعة:</strong> يعبّر عن التركيب العضوي للأذن الداخلية والتوافق الطبيعي.
-          </div>
-          <div className="story-chip">
-            <strong className="text-emerald-400">2. أعمدة التردد الثلاثية:</strong> تمثل معالجة الأصوات الحيوية (البيز، مخارج الحروف، والتردد العالي).
-          </div>
-          <div className="story-chip">
-            <strong className="text-white">3. نواة الوضوح الذهبية:</strong> ترمز إلى استعادة الإدراك واليقين الصوتي للمستخدم.
-          </div>
-        </div>
+      {/* Bottom Screen Edge Progress Track */}
+      <div className="theatre-progress-edge">
+        <div 
+          className="theatre-progress-edge-fill" 
+          style={{ width: `${progress * 100}%` }} 
+        />
       </div>
     </div>
   );
