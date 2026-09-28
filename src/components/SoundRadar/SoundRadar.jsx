@@ -167,9 +167,74 @@ export default function SoundRadar() {
     render();
   };
 
+  const drawIdleRadar = () => {
+    const canvas = radarCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const w = (canvas.width = 280);
+    const h = (canvas.height = 280);
+    const cx = w / 2;
+    const cy = h / 2;
+    const radius = 120;
+
+    ctx.clearRect(0, 0, w, h);
+
+    // Dark Radar Background Circle
+    const bgGrad = ctx.createRadialGradient(cx, cy, 10, cx, cy, radius);
+    bgGrad.addColorStop(0, '#0f172a');
+    bgGrad.addColorStop(0.7, '#070d1e');
+    bgGrad.addColorStop(1, '#020617');
+    ctx.fillStyle = bgGrad;
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Concentric circles
+    ctx.strokeStyle = 'rgba(56, 189, 248, 0.3)';
+    ctx.lineWidth = 1.5;
+    [0.3, 0.6, 0.9, 1.0].forEach(factor => {
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius * factor, 0, Math.PI * 2);
+      ctx.stroke();
+    });
+
+    // Crosshairs
+    ctx.strokeStyle = 'rgba(56, 189, 248, 0.2)';
+    ctx.beginPath();
+    ctx.moveTo(cx - radius, cy);
+    ctx.lineTo(cx + radius, cy);
+    ctx.moveTo(cx, cy - radius);
+    ctx.lineTo(cx, cy + radius);
+    ctx.stroke();
+
+    // Center pulse dot
+    ctx.fillStyle = '#00D4AA';
+    ctx.beginPath();
+    ctx.arc(cx, cy, 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Text guidance
+    ctx.font = '700 13px "Cairo", sans-serif';
+    ctx.fillStyle = '#38BDF8';
+    ctx.textAlign = 'center';
+    ctx.fillText('📡 رادار الاستشعار الحسي', cx, cy - 18);
+
+    ctx.font = '500 11px "Tajawal", sans-serif';
+    ctx.fillStyle = '#94A3B8';
+    ctx.fillText('في وضع الاستعداد', cx, cy + 2);
+    ctx.fillText('اضغط «تفعيل رادار الأمان» للبدء', cx, cy + 20);
+  };
+
   useEffect(() => {
+    drawIdleRadar();
     return () => stopMonitoring();
   }, []);
+
+  useEffect(() => {
+    if (!isMonitoring) {
+      drawIdleRadar();
+    }
+  }, [isMonitoring]);
 
   return (
     <div className={`sound-radar-card ${activeAlert && flashEnabled ? 'flash-alert-active' : ''}`}>
