@@ -130,7 +130,7 @@ export default function WindowsAudioGuideModal({ isOpen, onClose }) {
             </div>
 
             <div className="os-ext-banner">
-              <strong>💡 خطة التوسع المعتمدة لمسابقة SAIF 2026:</strong>
+              <strong>💡 خطة التوسع والتشغيل الشامل:</strong>
               <p>تم تصميم المعمارية لتكون جاهزة للإطلاق كإضافة رسمية لمتصفح كروم (Google Chrome Extension) وتطبيق في صينية النظام (Windows Tray Utility).</p>
             </div>
           </div>

@@ -38,7 +38,7 @@ export default function Navbar({ currentView, onViewChange, activeTab, onTabChan
             </div>
             <div className="brand-text-cluster">
               <span className="brand-title">مدى السمع</span>
-              <span className="brand-badge">جائزة مدى 2026</span>
+              <span className="brand-badge">منظومة الوصول الشامل</span>
             </div>
           </div>
 

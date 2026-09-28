@@ -229,7 +229,7 @@ export default function SmartCaptions({ isFloating, onToggleFloating }) {
 
     doc.setFontSize(9);
     doc.setTextColor(148, 163, 184);
-    doc.text('Mada Al-Sam-a Accessibility Platform - SAIF 2026', 105, 285, { align: 'center' });
+    doc.text('Mada Al-Sam-a Accessibility Platform - Assistive Audio Ecosystem', 105, 285, { align: 'center' });
 
     doc.save(`Mada_Captions_${Date.now()}.pdf`);
   };

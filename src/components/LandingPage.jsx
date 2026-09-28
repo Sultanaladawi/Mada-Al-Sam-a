@@ -96,7 +96,7 @@ export default function LandingPage({ onViewChange }) {
         <div className="hero-content">
           <div className="hero-badge">
             <span className="badge-dot"></span>
-            مشروع مقدّم لجائزة مدى للابتكار 2026
+            منظومة الوصول الصوتي الذكي الشاملة لتمكين ذوي الإعاقة السمعية
           </div>
           <h1 className="hero-title">
             <span className="gradient-text">مدى السمع</span>
@@ -461,7 +461,7 @@ export default function LandingPage({ onViewChange }) {
             <span className="section-badge">الأثر الإنساني والمجتمعي</span>
             <h2 className="section-title">تمكين حقيقي لأكثر من<br/><span className="gradient-text">466 مليون إنسان حول العالم</span></h2>
             <p className="section-desc">
-              مشروع مقدّم لجائزة مدى للابتكار 2026 لتحقيق الشمول الرقمي وتكافؤ الفرص في التعليم والعمل والحياة اليومية.
+              منظومة ويب متقدمة ومفتوحة المصدر لتحقيق الشمول الرقمي وتكافؤ الفرص في التعليم والعمل والحياة اليومية.
             </p>
           </div>
 

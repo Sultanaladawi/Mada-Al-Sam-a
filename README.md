@@ -1,13 +1,13 @@
 # مدى السمع — Mada Al-Sam'a
 ### منظومة الوصول الصوتي الذكي الشاملة لتمكين ذوي الإعاقة السمعية
-**مشروع مقدّم ومُرشّح رسمي لجائزة مدى للابتكار 2026 (Mada Innovation Award 2026 — الدوحة، قطر)**
+**منصة ويب متكاملة ومفتوحة المصدر للتأهيل الصوتي والوصول الشامل للصم وضعاف السمع — تطوير وابتكار: سلطان العدوي**
 
 ---
 
 <div align="center">
 
 [![Live Demo](https://img.shields.io/badge/Live_Demo-Vercel_Production-00D4AA?style=for-the-badge&logo=vercel)](https://mada-al-sam-a.vercel.app/)
-[![Award Candidate](https://img.shields.io/badge/Mada_Innovation_Award-2026_Nominee-6C63FF?style=for-the-badge&logo=target)](https://mada.org.qa/)
+[![Developer](https://img.shields.io/badge/Developer-Sultan_Al--Adawi-6C63FF?style=for-the-badge&logo=github)](https://github.com/Sultanaladawi)
 [![Accessibility](https://img.shields.io/badge/WCAG-2.2_AAA_Compliant-success?style=for-the-badge&logo=w3c)](https://www.w3.org/WAI/standards-guidelines/wcag/)
 [![Framework](https://img.shields.io/badge/React_19-Vite_8-61DAFB?style=for-the-badge&logo=react)](https://react.dev/)
 [![DSP](https://img.shields.io/badge/Audio_DSP-Web_Audio_API-FF6B6B?style=for-the-badge)](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API)

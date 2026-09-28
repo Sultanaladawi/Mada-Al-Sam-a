@@ -498,7 +498,7 @@ export default function HearingTest({ onProfileGenerated, onApplyToAid }) {
     doc.setFontSize(10);
     doc.setFont('Helvetica', 'normal');
     doc.text(`Date: ${new Date().toLocaleDateString('en-GB')}  |  Method: ${outputMode === 'speakers' ? 'Free-Field Sound Field (Speakers)' : 'Circumaural Headphones'}`, 105, 30, { align: 'center' });
-    doc.text(`Condition: ${aidStatus === 'aided' ? 'Aided Hearing Aid Verification' : 'Unaided Baseline Testing'}  |  SAIF Innovation 2026`, 105, 36, { align: 'center' });
+    doc.text(`Condition: ${aidStatus === 'aided' ? 'Aided Hearing Aid Verification' : 'Unaided Baseline Testing'}  |  Clinical Audiology Report`, 105, 36, { align: 'center' });
 
     doc.setDrawColor(203, 213, 225);
     doc.line(20, 40, 190, 40);

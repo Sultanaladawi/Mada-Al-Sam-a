@@ -13,8 +13,8 @@ export default function Footer({ onViewChange }) {
               المنظومة البيئية الشاملة لتمكين ذوي الإعاقة السمعية عبر طبقة وصول ذكية توفق بين التقنية الحديثة والأذن البشرية.
             </p>
             <div className="award-ribbon-tag">
-              <Award className="w-4 h-4 ml-1.5 text-amber-400" />
-              مشروع مرشح لجائزة مدى للابتكار 2026 — الدوحة، قطر
+              <ShieldCheck className="w-4 h-4 ml-1.5 text-emerald-400" />
+              تطوير وابتكار: سلطان العدوي — مهندس برمجيات
             </div>
           </div>
 

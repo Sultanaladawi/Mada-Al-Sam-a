@@ -29,7 +29,7 @@ const QUICK_SITES = [
 const MEDIA_DEMOS = [
   {
     id: 1,
-    title: 'محاضرة جامعة قطر: معايير النفاذ الرقمي الشامل 2026',
+    title: 'محاضرة معايير النفاذ الرقمي الشامل وتمكين ذوي الإعاقة',
     platform: 'YouTube',
     category: 'تعليمي',
     caption: '“...يجب أن نضمن أن كل منصة تعليمية تمتلك ترجمة فورية وكتابة متزامنة للأشخاص ذوي الإعاقة السمعية...”',
@@ -321,7 +321,7 @@ export default function MadaBrowser({
         <div className="system-audio-engine-panel">
           <div className="system-engine-header">
             <div className="engine-title-cluster">
-              <span className="engine-badge">⚡ ابتكار فريد لمسابقة SAIF 2026</span>
+              <span className="engine-badge">⚡ تقنية معالجة صوتية حية وشاملة</span>
               <h3>التقاط وتكييف صوت كامل الجهاز ونظام التشغيل (OS-Wide Audio Layer)</h3>
               <p>
                 شغّل أي برنامج على جهازك (زووم Zoom، تيمز Teams، يوتيوب، سبوتيفاي، أو ألعاب)؛ سيقوم مدى السمع باعتراض الصوت وتكييفه وترشيحه من الضوضاء لحظياً لسماعات أذنك في كافة الأجهزة!
