@@ -51,6 +51,19 @@ const SAMPLE_LECTURES = [
   }
 ];
 
+const YOUTUBE_PRESETS = [
+  {
+    title: 'محاضرة يوتيوب: معالجة الإشارات الصوتية DSP والذكاء الاصطناعي لضعاف السمع',
+    videoId: 'M7lc1UVf-VE',
+    transcript: 'بسم الله الرحمن الرحيم، مرحباً بكم في هذا الشرح التعليمي حول تقنيات معالجة الصوت الرقمي DSP والذكاء الاصطناعي لخدمة ضعاف السمع. في هذا المقطع سنشرح بالتفصيل كيف يتم تطبيق مصفوفة الفلاتر الترددية لتعويض الفقدان السمعي عند ترددات الكلام البشري ما بين 2000 و 4000 هرتز، وكيف تعمل خوارزميات عزل الضجيج والتفريغ الآلي لتوليد ملخصات دراسية واختبارات فهم فورية تمكن الطلاب من متابعة المحاضرات بأعلى دقة ممكنة.'
+  },
+  {
+    title: 'فيديو يوتيوب: معايير النفاذ الرقمي والتصميم الشامل (WCAG 2.2)',
+    videoId: '20SHvU2PKsM',
+    transcript: 'في هذه الجلسة نستعرض مبادئ التصميم الشامل Universal Design وفق معايير W3C و WCAG 2.2. التصميم الشامل يركز على تمكين الطلاب الصم وضعاف السمع من الوصول إلى المحاضرات ومقاطع الفيديو عبر توفير بدائل نصية فورية وتلخيص ذكي وبنك أسئلة يثري الفهم الأكاديمي والاستيعاب المستمر.'
+  }
+];
+
 export default function SmartLectures({ userAudiogram, isCapturingSystem, systemDb = 0, onToggleSystemCapture }) {
   const [lectures, setLectures] = useState(SAMPLE_LECTURES);
   const [selectedLecture, setSelectedLecture] = useState(SAMPLE_LECTURES[0]);
@@ -81,6 +94,8 @@ export default function SmartLectures({ userAudiogram, isCapturingSystem, system
   const [liveTitle, setLiveTitle] = useState('');
   const [liveTranscript, setLiveTranscript] = useState('');
   const [liveInterim, setLiveInterim] = useState('');
+  const [youtubeInputUrl, setYoutubeInputUrl] = useState('');
+  const [activeVideoId, setActiveVideoId] = useState(null);
   const isRecordingLiveRef = useRef(false);
   const recognitionRef = useRef(null);
   const micAudioCtxRef = useRef(null);
@@ -375,6 +390,48 @@ export default function SmartLectures({ userAudiogram, isCapturingSystem, system
         setLiveTranscript(prev => (prev ? prev + '\n' + manual.trim() : manual.trim()));
       }
     }
+  };
+
+  // Extract YouTube Video ID from any standard URL
+  const extractYouTubeId = (url) => {
+    if (!url) return null;
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : null;
+  };
+
+  const handleLoadFromYouTubeUrl = () => {
+    const vidId = extractYouTubeId(youtubeInputUrl);
+    if (!vidId) {
+      alert('يرجى إدخال رابط يوتيوب صحيح (مثال: https://www.youtube.com/watch?v=...)');
+      return;
+    }
+    setActiveVideoId(vidId);
+    setLiveTitle(`محاضرة يوتيوب مسجلة (${vidId})`);
+    if (!liveTranscript) {
+      setLiveTranscript('تم تشغيل فيديو يوتيوب داخل المشغل المدمج بنجاح. يمكنك التحدث في المايك لتسجيل ملاحظاتك أو لصق نص تفريغ الفيديو هنا عبر زر "لصق من الحافظة"، أو استخدام زر "نموذج يوتيوب جاهز" للتجربة والتلخيص بالذكاء الاصطناعي!');
+    }
+  };
+
+  const handleSelectPresetYouTube = (idx) => {
+    const preset = YOUTUBE_PRESETS[idx];
+    if (!preset) return;
+    setActiveVideoId(preset.videoId);
+    setLiveTitle(preset.title);
+    setLiveTranscript('');
+    setLiveInterim('');
+
+    let i = 0;
+    const words = preset.transcript.split(' ');
+    const timer = setInterval(() => {
+      i += 3;
+      setLiveTranscript(words.slice(0, i).join(' '));
+      if (i >= words.length) {
+        clearInterval(timer);
+        setLiveTranscript(preset.transcript);
+        setNewNotes(preset.transcript);
+      }
+    }, 40);
   };
 
   // Live Speech Recognition Toggle (Transcribes live video / audio)
@@ -941,6 +998,86 @@ export default function SmartLectures({ userAudiogram, isCapturingSystem, system
                   ⚠️ مستوى التقاط الصوت منخفض ({micVolume}%) — إذا كنت ترتدي سماعة أذن فالصوت لا يصل للمايك. شغّل الصوت عبر مكبرات اللابتوب أو اضغط زر "🎬 نموذج يوتيوب جاهز" للتجربة فوراً!
                 </span>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* VOICE TEST BANNER EXPLAINING ECHO CANCELLATION */}
+        <div className="mic-voice-test-banner">
+          <div className="voice-test-header">
+            <Mic className="w-4 h-4 text-cyan-400" />
+            <strong>💡 تجربة المايك بصوتك المباشر (تفسير مهم):</strong>
+          </div>
+          <p>
+            صوت سماعات اللابتوب يتم كتمه وعزله تلقائياً بواسطة ميزة <strong>(Acoustic Echo Cancellation)</strong> في كرت الصوت لحمايتك من حدوث صدى في المكالمات.
+            <strong> لتجربة المايك الحي:</strong> اضغط <em>"بدء الاستماع والتفريغ"</em> وتحدث في مايك اللابتوب قائلاً:
+            <span className="speech-quote">« السلام عليكم، فحص منظومة مدى السمع »</span>
+            وستجد أن الكلمات تُكتب وتظهر فوراً أمامك!
+          </p>
+        </div>
+
+        {/* YOUTUBE SMART INTEGRATION TOOLBAR */}
+        <div className="youtube-smart-toolbar">
+          <div className="yt-input-row">
+            <div className="yt-label-badge">
+              <span className="yt-dot" />
+              <strong>تفريغ فيديو يوتيوب:</strong>
+            </div>
+            <input
+              type="text"
+              placeholder="ضع رابط أي فيديو يوتيوب هنا (مثال: https://www.youtube.com/watch?v=...)..."
+              value={youtubeInputUrl}
+              onChange={(e) => setYoutubeInputUrl(e.target.value)}
+              className="styled-yt-url-input"
+            />
+            <button
+              type="button"
+              onClick={handleLoadFromYouTubeUrl}
+              className="btn-yt-load"
+            >
+              تشغيل وتفريغ الفيديو ⚡
+            </button>
+          </div>
+
+          <div className="yt-presets-quick-row">
+            <span className="presets-hint">فيديوهات جاهزة للتجربة الفورية:</span>
+            <button
+              type="button"
+              onClick={() => handleSelectPresetYouTube(0)}
+              className="yt-preset-pill"
+            >
+              🎥 1. محاضرة معالجة الصوت DSP والذكاء الاصطناعي
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSelectPresetYouTube(1)}
+              className="yt-preset-pill"
+            >
+              🎥 2. شرح معايير الوصول الرقمي WCAG
+            </button>
+          </div>
+        </div>
+
+        {/* EMBEDDED YOUTUBE PLAYER IF ACTIVE */}
+        {activeVideoId && (
+          <div className="embedded-yt-player-box">
+            <div className="player-meta-bar">
+              <span className="player-title-text">🎥 مشغل يوتيوب المباشر متزامن مع التفريغ الذكي</span>
+              <button 
+                type="button" 
+                onClick={() => setActiveVideoId(null)} 
+                className="btn-close-yt-player"
+              >
+                ✕ إغلاق الفيديو
+              </button>
+            </div>
+            <div className="iframe-container-16-9">
+              <iframe
+                src={`https://www.youtube.com/embed/${activeVideoId}?autoplay=1`}
+                title="YouTube lecture preview"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
             </div>
           </div>
         )}

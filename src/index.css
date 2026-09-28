@@ -5719,6 +5719,197 @@ body {
   line-height: 1.4;
 }
 
+/* Mic Voice Test Banner */
+.mic-voice-test-banner {
+  background: rgba(56, 189, 248, 0.08);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 12px;
+  padding: 10px 16px;
+  margin-bottom: 14px;
+}
+
+.voice-test-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #38BDF8;
+  font-size: 0.84rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.mic-voice-test-banner p {
+  font-size: 0.8rem;
+  color: #CBD5E1;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.speech-quote {
+  display: inline-block;
+  background: rgba(56, 189, 248, 0.2);
+  color: #38BDF8;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-weight: 800;
+  margin: 0 4px;
+}
+
+/* YouTube Smart Toolbar & Player in SmartLectures */
+.youtube-smart-toolbar {
+  background: rgba(220, 38, 38, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: 14px;
+  padding: 12px 16px;
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.yt-input-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.yt-label-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #F87171;
+  font-size: 0.85rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.yt-dot {
+  width: 8px;
+  height: 8px;
+  background: #EF4444;
+  border-radius: 50%;
+  animation: blink 1.2s infinite;
+}
+
+.styled-yt-url-input {
+  flex: 1;
+  min-width: 250px;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: #FFFFFF;
+  font-size: 0.84rem;
+  outline: none;
+}
+
+.styled-yt-url-input:focus {
+  border-color: #EF4444;
+}
+
+.btn-yt-load {
+  background: #EF4444;
+  color: #FFFFFF;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btn-yt-load:hover {
+  background: #DC2626;
+  transform: translateY(-1px);
+}
+
+.yt-presets-quick-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.presets-hint {
+  font-size: 0.78rem;
+  color: #94A3B8;
+  font-weight: 600;
+}
+
+.yt-preset-pill {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #F1F5F9;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.yt-preset-pill:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: #EF4444;
+  color: #FCA5A5;
+}
+
+.embedded-yt-player-box {
+  background: #000000;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+
+.player-meta-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(15, 23, 42, 0.95);
+  padding: 8px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.player-title-text {
+  font-size: 0.8rem;
+  color: #F87171;
+  font-weight: 700;
+}
+
+.btn-close-yt-player {
+  background: transparent;
+  border: none;
+  color: #94A3B8;
+  font-size: 0.76rem;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.btn-close-yt-player:hover {
+  color: #EF4444;
+}
+
+.iframe-container-16-9 {
+  position: relative;
+  width: 100%;
+  padding-bottom: 56.25%; /* 16:9 ratio */
+  height: 0;
+}
+
+.iframe-container-16-9 iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
 .btn-studio-record {
   display: inline-flex;
   align-items: center;
