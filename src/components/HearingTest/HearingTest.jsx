@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   Volume2, VolumeX, CheckCircle2, RotateCcw, Download, Sparkles, 
   Headphones, ShieldAlert, FileText, Speaker, Activity, ArrowRight, 
-  Check, Layers, Award, TrendingUp, HelpCircle
+  Check, Layers, TrendingUp, HelpCircle
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { jsPDF } from 'jspdf';
@@ -799,7 +799,7 @@ export default function HearingTest({ onProfileGenerated, onApplyToAid }) {
           {activeResultsView === 'comparison' && functionalGainData && (
             <div className="functional-gain-banner">
               <div className="gain-icon-wrap">
-                <Award className="w-7 h-7 text-amber-400" />
+                <TrendingUp className="w-7 h-7 text-emerald-400" />
               </div>
               <div className="gain-details">
                 <div className="gain-headline">

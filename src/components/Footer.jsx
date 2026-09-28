@@ -1,5 +1,5 @@
 import React from 'react';
-import { Heart, ShieldCheck, Award, ExternalLink } from 'lucide-react';
+import { Heart, ShieldCheck, ExternalLink } from 'lucide-react';
 
 export default function Footer({ onViewChange }) {
   return (
@@ -12,7 +12,7 @@ export default function Footer({ onViewChange }) {
             <p>
               المنظومة البيئية الشاملة لتمكين ذوي الإعاقة السمعية عبر طبقة وصول ذكية توفق بين التقنية الحديثة والأذن البشرية.
             </p>
-            <div className="award-ribbon-tag">
+            <div className="identity-ribbon-tag">
               <ShieldCheck className="w-4 h-4 ml-1.5 text-emerald-400" />
               تطوير وابتكار: سلطان العدوي — مهندس برمجيات
             </div>

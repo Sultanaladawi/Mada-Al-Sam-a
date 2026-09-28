@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-  Activity, Volume2, Sparkles, ShieldAlert, Award, FileText, 
+  Activity, Volume2, Sparkles, ShieldAlert, FileText, 
   CheckCircle2, ArrowLeft, ArrowUpRight, Headphones, Heart, 
   Users, GraduationCap, Briefcase, Zap, Play, Pause, RefreshCw, 
   BarChart2, ShieldCheck, ChevronRight, Sliders, Eye
