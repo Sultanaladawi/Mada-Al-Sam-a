@@ -5585,8 +5585,138 @@ body {
 .studio-header-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   flex-wrap: wrap;
+}
+
+.studio-lang-toggle {
+  display: inline-flex;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  padding: 3px;
+  gap: 3px;
+}
+
+.studio-lang-toggle .lang-btn {
+  background: transparent;
+  border: none;
+  color: #94A3B8;
+  padding: 4px 10px;
+  border-radius: 14px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.studio-lang-toggle .lang-btn:hover {
+  color: #FFFFFF;
+}
+
+.studio-lang-toggle .lang-btn.active {
+  background: #38BDF8;
+  color: #0F172A;
+  font-weight: 800;
+  box-shadow: 0 2px 8px rgba(56, 189, 248, 0.4);
+}
+
+.btn-studio-demo {
+  display: inline-flex;
+  align-items: center;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(217, 119, 6, 0.25) 100%);
+  border: 1.5px solid rgba(245, 158, 11, 0.5);
+  color: #FCD34D;
+  padding: 8px 16px;
+  border-radius: 30px;
+  font-size: 0.84rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 10px rgba(245, 158, 11, 0.15);
+}
+
+.btn-studio-demo:hover {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.25) 0%, rgba(217, 119, 6, 0.35) 100%);
+  border-color: #FCD34D;
+  color: #FFFFFF;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.3);
+}
+
+.btn-studio-paste {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(99, 102, 241, 0.15);
+  border: 1.5px solid rgba(129, 140, 248, 0.4);
+  color: #A5B4FC;
+  padding: 8px 15px;
+  border-radius: 30px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-studio-paste:hover {
+  background: rgba(99, 102, 241, 0.25);
+  border-color: #A5B4FC;
+  color: #FFFFFF;
+  transform: translateY(-1px);
+}
+
+.mic-vu-status-bar {
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.vu-meter-track {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.vu-meter-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.08s ease, background 0.2s ease;
+}
+
+.vu-meter-fill.active {
+  background: linear-gradient(90deg, #10B981, #00D4AA);
+  box-shadow: 0 0 10px rgba(0, 212, 170, 0.6);
+}
+
+.vu-meter-fill.low {
+  background: linear-gradient(90deg, #F59E0B, #EF4444);
+}
+
+.vu-meter-info {
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.vu-status-ok {
+  color: #34D399;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.vu-status-low {
+  color: #FBBF24;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 1.4;
 }
 
 .btn-studio-record {

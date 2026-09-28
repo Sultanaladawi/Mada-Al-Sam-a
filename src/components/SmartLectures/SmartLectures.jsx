@@ -51,7 +51,7 @@ const SAMPLE_LECTURES = [
   }
 ];
 
-export default function SmartLectures({ userAudiogram, isCapturingSystem, onToggleSystemCapture }) {
+export default function SmartLectures({ userAudiogram, isCapturingSystem, systemDb = 0, onToggleSystemCapture }) {
   const [lectures, setLectures] = useState(SAMPLE_LECTURES);
   const [selectedLecture, setSelectedLecture] = useState(SAMPLE_LECTURES[0]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -76,11 +76,18 @@ export default function SmartLectures({ userAudiogram, isCapturingSystem, onTogg
 
   // Live Microphone / Lecture & Video Transcriber State
   const [isRecordingLive, setIsRecordingLive] = useState(false);
+  const [selectedLang, setSelectedLang] = useState('ar-SA');
+  const [micVolume, setMicVolume] = useState(0);
   const [liveTitle, setLiveTitle] = useState('');
   const [liveTranscript, setLiveTranscript] = useState('');
   const [liveInterim, setLiveInterim] = useState('');
   const isRecordingLiveRef = useRef(false);
   const recognitionRef = useRef(null);
+  const micAudioCtxRef = useRef(null);
+  const micAnalyserRef = useRef(null);
+  const micStreamRef = useRef(null);
+  const micAnimFrameRef = useRef(null);
+  const restartTimeoutRef = useRef(null);
 
   // Calculate EQ gains derived from user audiogram
   const eqGains = BANDS.map((b, i) => {
@@ -248,21 +255,142 @@ export default function SmartLectures({ userAudiogram, isCapturingSystem, onTogg
     } catch (e) {}
   };
 
+  const startMicAnalyser = async () => {
+    try {
+      if (micStreamRef.current) return;
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      micStreamRef.current = stream;
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      const ctx = new AudioCtx();
+      micAudioCtxRef.current = ctx;
+      const source = ctx.createMediaStreamSource(stream);
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 128;
+      analyser.smoothingTimeConstant = 0.5;
+      source.connect(analyser);
+      micAnalyserRef.current = analyser;
+
+      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+      const pollVol = () => {
+        if (!isRecordingLiveRef.current) return;
+        analyser.getByteFrequencyData(dataArray);
+        let sum = 0;
+        for (let i = 0; i < dataArray.length; i++) {
+          sum += dataArray[i];
+        }
+        const avg = sum / (dataArray.length || 1);
+        const pct = Math.min(100, Math.round((avg / 128) * 100));
+        setMicVolume(pct);
+        micAnimFrameRef.current = requestAnimationFrame(pollVol);
+      };
+      pollVol();
+    } catch (err) {
+      console.warn('Mic VU monitor not available:', err);
+    }
+  };
+
+  const stopMicAnalyser = () => {
+    if (micAnimFrameRef.current) {
+      cancelAnimationFrame(micAnimFrameRef.current);
+      micAnimFrameRef.current = null;
+    }
+    if (micStreamRef.current) {
+      micStreamRef.current.getTracks().forEach(t => t.stop());
+      micStreamRef.current = null;
+    }
+    if (micAudioCtxRef.current) {
+      try { micAudioCtxRef.current.close(); } catch (e) {}
+      micAudioCtxRef.current = null;
+    }
+    setMicVolume(0);
+  };
+
   useEffect(() => {
     return () => {
       stopLectureAudio();
+      stopMicAnalyser();
+      if (restartTimeoutRef.current) clearTimeout(restartTimeoutRef.current);
+      if (recognitionRef.current) {
+        try { recognitionRef.current.stop(); } catch (e) {}
+      }
     };
   }, [selectedLecture]);
+
+  // Language switcher for speech recognition
+  const handleLanguageChange = (lang) => {
+    setSelectedLang(lang);
+    if (isRecordingLive && recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+        setTimeout(() => {
+          if (isRecordingLiveRef.current && recognitionRef.current) {
+            recognitionRef.current.lang = lang;
+            try { recognitionRef.current.start(); } catch (e) {}
+          }
+        }, 300);
+      } catch (e) {}
+    }
+  };
+
+  // Instant 1-Click YouTube Lecture Demo
+  const handleLoadYouTubeDemo = () => {
+    const demoTitle = 'شرح عملي: معالجة الإشارات الصوتية والذكاء الاصطناعي لضعاف السمع (YouTube)';
+    const demoText = 'بسم الله الرحمن الرحيم، مرحباً بكم في هذا الفيديو التعليمي حول كيفية عمل منظومة مدى السمع. في هذه المحاضرة سنشرح كيف يقوم الذكاء الاصطناعي بتحليل الترددات الصوتية وتطبيق فلاتر رقمية مخصصة بناءً على مخطط السمع السريري للمستخدم. الهدف الأساسي هو تعويض الترددات المفقودة مثل ترددات 2000 هرتز و 4000 هرتز التي تحتوي على معظم أصوات مخارج الحروف في الكلام البشري. كما توفر المنظومة تفريغاً صوتياً فورياً وتحويلاً للكلام إلى نصوص مقروءة، بالإضافة إلى تلخيص ذكي وبنك أسئلة لاختبار الفهم وتصدير ملخصات أكاديمية بصيغة PDF معتمدة.';
+    
+    setLiveTitle(demoTitle);
+    setLiveTranscript('');
+    setLiveInterim('');
+
+    // Smooth progressive streaming typewriter
+    let idx = 0;
+    const words = demoText.split(' ');
+    const interval = setInterval(() => {
+      idx += 2;
+      setLiveTranscript(words.slice(0, idx).join(' '));
+      if (idx >= words.length) {
+        clearInterval(interval);
+        setLiveTranscript(demoText);
+        setNewNotes(demoText);
+      }
+    }, 40);
+  };
+
+  // 1-Click Clipboard Paste
+  const handlePasteClipboard = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (text && text.trim()) {
+        const clean = text.trim();
+        setLiveTranscript(prev => (prev ? prev + '\n' + clean : clean));
+        setNewNotes(prev => (prev ? prev + '\n' + clean : clean));
+        if (!liveTitle) {
+          setLiveTitle('نص مفرغ من يوتيوب / المحاضرة');
+        }
+      } else {
+        alert('الحافظة فارغة! انسخ نص تفريغ فيديو يوتيوب أولاً ثم انقر لصق.');
+      }
+    } catch (err) {
+      const manual = prompt('الصق نص الفيديو أو المحاضرة هنا:');
+      if (manual && manual.trim()) {
+        setLiveTranscript(prev => (prev ? prev + '\n' + manual.trim() : manual.trim()));
+      }
+    }
+  };
 
   // Live Speech Recognition Toggle (Transcribes live video / audio)
   const toggleLiveRecording = () => {
     if (isRecordingLive) {
       isRecordingLiveRef.current = false;
+      if (restartTimeoutRef.current) {
+        clearTimeout(restartTimeoutRef.current);
+        restartTimeoutRef.current = null;
+      }
       if (recognitionRef.current) {
         try {
           recognitionRef.current.stop();
         } catch (e) {}
       }
+      stopMicAnalyser();
       setIsRecordingLive(false);
       setLiveInterim('');
     } else {
@@ -274,7 +402,7 @@ export default function SmartLectures({ userAudiogram, isCapturingSystem, onTogg
 
       try {
         const recognition = new SpeechRecognition();
-        recognition.lang = 'ar-SA';
+        recognition.lang = selectedLang;
         recognition.continuous = true;
         recognition.interimResults = true;
 
@@ -301,24 +429,30 @@ export default function SmartLectures({ userAudiogram, isCapturingSystem, onTogg
 
         recognition.onerror = (err) => {
           console.warn('Speech recognition notice:', err);
-          if (err.error === 'not-allowed') {
+          if (err.error === 'not-allowed' || err.error === 'service-not-allowed') {
             alert('يرجى السماح بالوصول إلى الميكروفون لبدء تفريغ صوت المحاضرة.');
             setIsRecordingLive(false);
             isRecordingLiveRef.current = false;
+            stopMicAnalyser();
           }
         };
 
         recognition.onend = () => {
           if (isRecordingLiveRef.current) {
-            try {
-              recognition.start();
-            } catch (e) {
-              setIsRecordingLive(false);
-              isRecordingLiveRef.current = false;
-            }
+            if (restartTimeoutRef.current) clearTimeout(restartTimeoutRef.current);
+            restartTimeoutRef.current = setTimeout(() => {
+              if (isRecordingLiveRef.current && recognitionRef.current) {
+                try {
+                  recognitionRef.current.start();
+                } catch (e) {
+                  console.log('Safe restart note:', e);
+                }
+              }
+            }, 350);
           } else {
             setIsRecordingLive(false);
             isRecordingLiveRef.current = false;
+            stopMicAnalyser();
           }
         };
 
@@ -326,10 +460,12 @@ export default function SmartLectures({ userAudiogram, isCapturingSystem, onTogg
         recognitionRef.current = recognition;
         setIsRecordingLive(true);
         isRecordingLiveRef.current = true;
+        startMicAnalyser();
       } catch (err) {
         console.error('Error starting recognition:', err);
         setIsRecordingLive(false);
         isRecordingLiveRef.current = false;
+        stopMicAnalyser();
       }
     }
   };
@@ -712,7 +848,49 @@ export default function SmartLectures({ userAudiogram, isCapturingSystem, onTogg
           </div>
 
           <div className="studio-header-actions">
+            {/* Language Switcher */}
+            <div className="studio-lang-toggle" title="اختيار لغة التعرف الصوتي">
+              <button
+                type="button"
+                onClick={() => handleLanguageChange('ar-SA')}
+                className={`lang-btn ${selectedLang === 'ar-SA' ? 'active' : ''}`}
+              >
+                🇸🇦 العربية
+              </button>
+              <button
+                type="button"
+                onClick={() => handleLanguageChange('en-US')}
+                className={`lang-btn ${selectedLang === 'en-US' ? 'active' : ''}`}
+              >
+                🇺🇸 English
+              </button>
+            </div>
+
+            {/* Instant Demo Generator */}
             <button
+              type="button"
+              onClick={handleLoadYouTubeDemo}
+              className="btn-studio-demo"
+              title="تجربة تفريغ وتلخيص نموذج فيديو يوتيوب بلمسة واحدة بدون مجهود"
+            >
+              <Sparkles className="w-4 h-4 ml-1.5 text-amber-300" />
+              <span>🎬 نموذج يوتيوب جاهز (تجربة فورية)</span>
+            </button>
+
+            {/* Paste from Clipboard */}
+            <button
+              type="button"
+              onClick={handlePasteClipboard}
+              className="btn-studio-paste"
+              title="لصق تفريغ الفيديو أو نص المحاضرة من الحافظة فوراً"
+            >
+              <FileText className="w-4 h-4 ml-1.5" />
+              <span>📋 لصق من الحافظة</span>
+            </button>
+
+            {/* Live Mic Speech Recognition Button */}
+            <button
+              type="button"
               onClick={toggleLiveRecording}
               className={`btn-studio-record ${isRecordingLive ? 'recording' : ''}`}
               title={isRecordingLive ? 'إيقاف الاستماع' : 'بدء الاستماع المباشر وتفريغ الصوت'}
@@ -720,17 +898,19 @@ export default function SmartLectures({ userAudiogram, isCapturingSystem, onTogg
               {isRecordingLive ? (
                 <>
                   <span className="live-pulse-dot" />
-                  <span>جارٍ الاستماع والتفريغ الحي... (انقر للإيقاف)</span>
+                  <span>جارٍ الاستماع الحي... (انقر للإيقاف)</span>
                 </>
               ) : (
                 <>
                   <Mic className="w-4 h-4 ml-1.5" />
-                  <span>بدء الاستماع والتفريغ من الفيديو / المحاضرة 🎙️</span>
+                  <span>بدء الاستماع والتفريغ من المايك 🎙️</span>
                 </>
               )}
             </button>
 
+            {/* AI Summary and Save Button */}
             <button
+              type="button"
               onClick={handleSummarizeAndSaveLive}
               disabled={isSummarizing || (!liveTranscript && !liveInterim)}
               className="btn-studio-summarize"
@@ -741,6 +921,29 @@ export default function SmartLectures({ userAudiogram, isCapturingSystem, onTogg
             </button>
           </div>
         </div>
+
+        {/* Live Audio Level VU Meter */}
+        {isRecordingLive && (
+          <div className="mic-vu-status-bar">
+            <div className="vu-meter-track">
+              <div 
+                className={`vu-meter-fill ${micVolume > 14 ? 'active' : 'low'}`} 
+                style={{ width: `${Math.max(6, micVolume)}%` }}
+              />
+            </div>
+            <div className="vu-meter-info">
+              {micVolume > 14 ? (
+                <span className="vu-status-ok">
+                  🟢 المايكروفون يلتقط الصوت بنشاط ({micVolume}%) — تحدّث الآن أو اجعل صوت الفيديو يخرج من مكبرات الصوت...
+                </span>
+              ) : (
+                <span className="vu-status-low">
+                  ⚠️ مستوى التقاط الصوت منخفض ({micVolume}%) — إذا كنت ترتدي سماعة أذن فالصوت لا يصل للمايك. شغّل الصوت عبر مكبرات اللابتوب أو اضغط زر "🎬 نموذج يوتيوب جاهز" للتجربة فوراً!
+                </span>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Live Input Controls */}
         <div className="studio-inputs-grid">
@@ -756,7 +959,7 @@ export default function SmartLectures({ userAudiogram, isCapturingSystem, onTogg
 
           <div className="studio-textarea-wrapper">
             <textarea
-              placeholder="سيبدأ الكلام المسموع بالظهور هنا تلقائياً أثناء تشغيل الفيديو / المحاضرة... أو يمكنك لصق تفريغ فيديو يوتيوب هنا مباشرة!"
+              placeholder="سيبدأ الكلام المسموع بالظهور هنا تلقائياً أثناء تشغيل الفيديو / المحاضرة... أو انقر زر '🎬 نموذج يوتيوب جاهز' أو '📋 لصق من الحافظة' لتجربة التلخيص فوراً!"
               value={liveTranscript + (liveInterim ? ' ' + liveInterim : '')}
               onChange={(e) => {
                 setLiveTranscript(e.target.value);
@@ -770,7 +973,7 @@ export default function SmartLectures({ userAudiogram, isCapturingSystem, onTogg
                 <span className="typing-dot" />
                 <span className="typing-dot" />
                 <span className="typing-dot" />
-                <span>المايكروفون يستمع بنشاط...</span>
+                <span>المايكروفون يستمع بنشاط ({selectedLang === 'ar-SA' ? 'عربي 🇸🇦' : 'English 🇺🇸'})...</span>
               </div>
             )}
           </div>
@@ -779,12 +982,13 @@ export default function SmartLectures({ userAudiogram, isCapturingSystem, onTogg
         {/* Informational Guidance Footer */}
         <div className="studio-guidance-strip">
           <div className="guidance-tip">
-            <span className="tip-badge">💡 معلومة هامة:</span>
-            <span>لتفريغ صوت فيديو يوتيوب أثناء تشغيله: دع الصوت يخرج من مكبرات الصوت (سماعات الجهاز الخارجية) ليلتقطه المايك، أو يمكنك نسخ نص الفيديو المكتوب ولصقه هنا مباشرة للحصول على الملخص والأسئلة فوراً!</span>
+            <span className="tip-badge">💡 لماذا لم يكتب المايك تلقائياً عند تشغيل يوتيوب؟</span>
+            <span>متصفح Chrome لأسباب أمنية يستمع عبر <strong>مايكروفون الجهاز فقط</strong> ولا يسمع داخل التبويبات مباشرة. لذلك: إذا كنت تستخدم سماعة أذن فلن يصل الصوت للمايك! لتفريغ يوتيوب: شغّل الصوت عبر سبيكر اللابتوب، أو اضغط زر <strong>"🎬 نموذج يوتيوب جاهز"</strong> أو <strong>"📋 لصق من الحافظة"</strong> للتجربة الفورية.</span>
           </div>
 
           {(liveTranscript || liveInterim) && (
             <button
+              type="button"
               onClick={() => {
                 setLiveTranscript('');
                 setLiveInterim('');

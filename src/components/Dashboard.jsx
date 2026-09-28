@@ -918,6 +918,7 @@ export default function Dashboard({ activeTab = 'overview', onTabChange, onViewC
           <SmartLectures
             userAudiogram={userAudiogram}
             isCapturingSystem={isCapturingSystem}
+            systemDb={systemDb}
             onToggleSystemCapture={toggleSystemAudioCapture}
           />
         )}
