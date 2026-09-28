@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   X, Sparkles, ShieldAlert, Activity, BookOpen, Volume2, 
   Smartphone, Eye, Layers, Heart, BellRing, CheckCircle2, ChevronLeft 
@@ -8,6 +8,17 @@ import MadaLogo from './MadaLogo';
 export default function DeafGuideModal({ isOpen, onClose }) {
   const [activeTab, setActiveTab] = useState('sign-basics'); // 'sign-basics', 'visual-steps', 'haptic-sim', 'cochlear'
   const [simulatedAlert, setSimulatedAlert] = useState(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 

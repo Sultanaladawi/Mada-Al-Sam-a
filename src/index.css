@@ -7096,18 +7096,114 @@ body {
 }
 
 /* =========================================================================
+   MADA GLOBAL MODAL BACKDROP & CONTAINER
+   ========================================================================= */
+.mada-modal-backdrop {
+  position: fixed !important;
+  inset: 0 !important;
+  background: rgba(3, 7, 18, 0.88) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  z-index: 99999 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 16px !important;
+  overflow-y: auto !important;
+  animation: modalBackdropFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+@keyframes modalBackdropFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.mada-modal-container {
+  position: relative !important;
+  border-radius: 24px !important;
+  overflow: hidden !important;
+  margin: auto !important;
+  box-sizing: border-box !important;
+  animation: modalPopUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+@keyframes modalPopUp {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.modal-header-luxury {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 20px 24px !important;
+  background: rgba(15, 23, 42, 0.85) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.header-brand-cluster {
+  display: flex !important;
+  align-items: center !important;
+  gap: 14px !important;
+}
+
+.header-brand-cluster h3 {
+  font-size: 1.25rem !important;
+  font-weight: 800 !important;
+  color: #FFFFFF !important;
+  margin: 4px 0 0 0 !important;
+}
+
+.modal-footer-luxury {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 16px 24px !important;
+  background: rgba(10, 15, 28, 0.95) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+  gap: 12px !important;
+  flex-wrap: wrap !important;
+}
+
+.btn-modal-action-primary {
+  background: linear-gradient(135deg, #10B981 0%, #0284C7 100%) !important;
+  border: none !important;
+  color: #FFFFFF !important;
+  padding: 10px 22px !important;
+  border-radius: 12px !important;
+  font-size: 0.9rem !important;
+  font-weight: 700 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  cursor: pointer !important;
+  transition: all 0.25s ease !important;
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3) !important;
+}
+
+.btn-modal-action-primary:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5) !important;
+}
+
+/* =========================================================================
    DEAF GUIDE MODAL & FLASH/HAPTIC SIMULATOR
    ========================================================================= */
 .deaf-guide-modal-container {
-  max-width: 860px !important;
+  max-width: 880px !important;
   width: 95% !important;
   max-height: 90vh !important;
-  display: flex;
-  flex-direction: column;
+  display: flex !important;
+  flex-direction: column !important;
   background: #090D1A !important;
   border: 1.5px solid rgba(52, 211, 153, 0.35) !important;
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7) !important;
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 35px rgba(16, 185, 129, 0.15) !important;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease !important;
 }
 
 .flash-active.flash-fire {
@@ -7354,6 +7450,46 @@ body {
   gap: 8px;
   text-align: center;
   align-items: center;
+  transition: all 0.25s ease;
+}
+.sim-card-fire {
+  border-color: rgba(239, 68, 68, 0.4) !important;
+}
+.sim-card-fire:hover {
+  background: rgba(239, 68, 68, 0.12) !important;
+  box-shadow: 0 4px 20px rgba(239, 68, 68, 0.25) !important;
+}
+.sim-card-ambulance {
+  border-color: rgba(56, 189, 248, 0.4) !important;
+}
+.sim-card-ambulance:hover {
+  background: rgba(56, 189, 248, 0.12) !important;
+  box-shadow: 0 4px 20px rgba(56, 189, 248, 0.25) !important;
+}
+.sim-card-door {
+  border-color: rgba(16, 185, 129, 0.4) !important;
+}
+.sim-card-door:hover {
+  background: rgba(16, 185, 129, 0.12) !important;
+  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.25) !important;
+}
+
+.sign-vocab-section,
+.visual-steps-section,
+.haptic-sim-section,
+.cochlear-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: tabFadeIn 0.25s ease;
+}
+
+.animate-bounce {
+  animation: modalBounce 1s infinite;
+}
+@keyframes modalBounce {
+  0%, 100% { transform: translateY(-8%); }
+  50% { transform: translateY(0); }
 }
 .sim-icon {
   font-size: 2.2rem;
