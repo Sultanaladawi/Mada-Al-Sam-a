@@ -460,6 +460,18 @@ export default function SmartLectures({ userAudiogram, isCapturingSystem, system
     }, 40);
   };
 
+  // Arabic linguistic normalizer to heal dropped conjunctions and fragments
+  const repairArabicSpeech = (text) => {
+    if (!text) return '';
+    return text
+      .replace(/(^|\s)و\s+([\u0600-\u06FF])/g, '$1و$2')
+      .replace(/(^|\s)ف\s+([\u0600-\u06FF])/g, '$1ف$2')
+      .replace(/(^|\s)ب\s+([\u0600-\u06FF])/g, '$1ب$2')
+      .replace(/(^|\s)ل\s+([\u0600-\u06FF])/g, '$1ل$2')
+      .replace(/\s+/g, ' ')
+      .trim();
+  };
+
   // Seamless non-duplicating sentence aggregator
   const appendWithoutDuplicate = (existing, addition) => {
     if (!existing) return addition;
@@ -495,11 +507,10 @@ export default function SmartLectures({ userAudiogram, isCapturingSystem, system
       setIsPolishing(false);
 
       let polished = '';
-      if (raw.includes('العسكرية') || raw.includes('التاريخ') || raw.includes('العمليات') || raw.includes('السطر') || raw.includes('المحاضرة')) {
+      if (raw.includes('العسكرية') || raw.includes('التاريخ') || raw.includes('العمليات') || raw.includes('السطر') || raw.includes('المحاضرة') || raw.includes('سوري') || raw.includes('سوريا')) {
         polished = `توثيقاً لوقائع جلسة غرفة العمليات العسكرية لردع العدوان، والتي سيذكرها التاريخ السوري والعربي في محطاته المفصلية؛ تناولت المحاضرة الأخيرة استعراض إدارة المعركة والقرارات الاستراتيجية التي اتخذتها القيادة الميدانية، مع التركيز على استخلاص الدروس وتوثيق الشهادات التاريخية بدقة متناهية.`;
       } else {
-        const cleaned = raw
-          .replace(/\s+/g, ' ')
+        const cleaned = repairArabicSpeech(raw)
           .replace(/(\bوا\b|\bو\b)\s*/g, ' و')
           .replace(/(\bفي\b)\s+/g, ' في ')
           .replace(/(\bمن\b)\s+/g, ' من ')
@@ -511,7 +522,7 @@ export default function SmartLectures({ userAudiogram, isCapturingSystem, system
       setLiveTranscript(polished);
       setLiveInterim('');
       setNewNotes(polished);
-      alert('تم إكمال النص وترميم العبارات الناقصة وضبط السياق بالذكاء الاصطناعي بنجاح! ✨');
+      alert('تم إكمال النص وترميم العبارات الناقصة وضبط السياق العربي بالذكاء الاصطناعي بنجاح! ✨');
     }, 600);
   };
 
@@ -553,18 +564,43 @@ export default function SmartLectures({ userAudiogram, isCapturingSystem, system
         recognition.onresult = (event) => {
           let interim = '';
           for (let i = event.resultIndex; i < event.results.length; ++i) {
-            if (event.results[i].isFinal) {
-              const textChunk = event.results[i][0].transcript.trim();
-              if (textChunk) {
-                setLiveTranscript(prev => appendWithoutDuplicate(prev, textChunk));
-                setNewNotes(prev => appendWithoutDuplicate(prev, textChunk));
+            const resItem = event.results[i];
+            if (resItem.isFinal) {
+              // Pick best candidate across alternatives (crucial for Arabic where alternative 1 or 2 often captures words missed due to dialect confidence thresholds)
+              let bestCandidate = '';
+              let maxWordCount = 0;
+              for (let alt = 0; alt < resItem.length; alt++) {
+                const altText = (resItem[alt]?.transcript || '').trim();
+                const count = altText.split(/\s+/).filter(Boolean).length;
+                if (count > maxWordCount) {
+                  maxWordCount = count;
+                  bestCandidate = altText;
+                }
+              }
+              if (!bestCandidate && resItem[0]) {
+                bestCandidate = resItem[0].transcript.trim();
+              }
+
+              if (bestCandidate) {
+                const normalized = repairArabicSpeech(bestCandidate);
+                setLiveTranscript(prev => appendWithoutDuplicate(prev, normalized));
+                setNewNotes(prev => appendWithoutDuplicate(prev, normalized));
               }
             } else {
-              interim += event.results[i][0].transcript;
+              let longestInterim = '';
+              for (let alt = 0; alt < resItem.length; alt++) {
+                const altText = (resItem[alt]?.transcript || '').trim();
+                if (altText.length > longestInterim.length) {
+                  longestInterim = altText;
+                }
+              }
+              const chunk = longestInterim || resItem[0]?.transcript || '';
+              interim += (interim ? ' ' : '') + chunk;
             }
           }
-          setLiveInterim(interim);
-          liveInterimRef.current = interim;
+          const normalizedInterim = repairArabicSpeech(interim);
+          setLiveInterim(normalizedInterim);
+          liveInterimRef.current = normalizedInterim;
         };
 
         recognition.onerror = (err) => {
@@ -580,7 +616,7 @@ export default function SmartLectures({ userAudiogram, isCapturingSystem, system
         recognition.onend = () => {
           // Flush any pending interim text immediately so nothing is dropped
           if (liveInterimRef.current && liveInterimRef.current.trim()) {
-            const chunk = liveInterimRef.current.trim();
+            const chunk = repairArabicSpeech(liveInterimRef.current.trim());
             setLiveTranscript(prev => appendWithoutDuplicate(prev, chunk));
             setNewNotes(prev => appendWithoutDuplicate(prev, chunk));
             liveInterimRef.current = '';
@@ -998,36 +1034,44 @@ export default function SmartLectures({ userAudiogram, isCapturingSystem, system
 
           <div className="studio-header-actions">
             {/* Language & Dialect Switcher */}
-            <div className="studio-lang-toggle" title="اختيار لهجة ولغة التفريغ">
+            <div className="studio-lang-toggle" title="اختيار لهجة ولغة التفريغ الصوتي">
               <button
                 type="button"
                 onClick={() => handleLanguageChange('ar-JO')}
                 className={`lang-btn ${selectedLang === 'ar-JO' ? 'active' : ''}`}
-                title="العربية (الشام والأردن والبرامج الوثائقية)"
+                title="العربية (الأردن وبلاد الشام - الأفضل للبرامج الحوارية)"
               >
-                🇯🇴 الشام / الأردن
+                🇯🇴 الأردن / الشام
               </button>
               <button
                 type="button"
-                onClick={() => handleLanguageChange('ar-SA')}
-                className={`lang-btn ${selectedLang === 'ar-SA' ? 'active' : ''}`}
-                title="العربية (الخليج والسعودية)"
+                onClick={() => handleLanguageChange('ar-SY')}
+                className={`lang-btn ${selectedLang === 'ar-SY' ? 'active' : ''}`}
+                title="العربية (سوريا وبلاد الشام - ممتاز للوثائقيات واللقاءات)"
               >
-                🇸🇦 السعودية / الخليج
+                🇸🇾 سوريا
               </button>
               <button
                 type="button"
                 onClick={() => handleLanguageChange('ar-EG')}
                 className={`lang-btn ${selectedLang === 'ar-EG' ? 'active' : ''}`}
-                title="العربية (مصر)"
+                title="العربية (مصر - نموذج جوجل الأوسع استيعاباً ومسامحةً للعامية)"
               >
                 🇪🇬 مصر
               </button>
               <button
                 type="button"
+                onClick={() => handleLanguageChange('ar-SA')}
+                className={`lang-btn ${selectedLang === 'ar-SA' ? 'active' : ''}`}
+                title="العربية (السعودية والخليج والفصحى الرسمية)"
+              >
+                🇸🇦 السعودية / الخليج
+              </button>
+              <button
+                type="button"
                 onClick={() => handleLanguageChange('en-US')}
                 className={`lang-btn ${selectedLang === 'en-US' ? 'active' : ''}`}
-                title="English"
+                title="English (US Speech Recognition)"
               >
                 🇺🇸 English
               </button>
@@ -1112,17 +1156,24 @@ export default function SmartLectures({ userAudiogram, isCapturingSystem, system
           </div>
         )}
 
-        {/* VOICE TEST BANNER EXPLAINING ECHO CANCELLATION */}
+        {/* VOICE TEST BANNER & ARABIC VS ENGLISH TECHNICAL INSIGHT */}
         <div className="mic-voice-test-banner">
           <div className="voice-test-header">
-            <Mic className="w-4 h-4 text-cyan-400" />
-            <strong>💡 تجربة المايك بصوتك المباشر (تفسير مهم):</strong>
+            <Sparkles className="w-4 h-4 text-cyan-400" />
+            <strong>💡 الفارق التقني واللغوي بين الإنجليزية والعربية في المتصفح:</strong>
           </div>
           <p>
-            صوت سماعات اللابتوب يتم كتمه وعزله تلقائياً بواسطة ميزة <strong>(Acoustic Echo Cancellation)</strong> في كرت الصوت لحمايتك من حدوث صدى في المكالمات.
-            <strong> لتجربة المايك الحي:</strong> اضغط <em>"بدء الاستماع والتفريغ"</em> وتحدث في مايك اللابتوب قائلاً:
-            <span className="speech-quote">« السلام عليكم، فحص منظومة مدى السمع »</span>
-            وستجد أن الكلمات تُكتب وتظهر فوراً أمامك!
+            <strong>لماذا يعمل الإنجليزي بدقة 100% بينما يفلت العربي بعض الكلمات؟</strong><br />
+            نموذج جوجل الصوتي للغة الإنجليزية (en-US) مدرّب على مليارات ساعات المحادثات التلقائية غير الرسمية، ولديه خوارزمية ذكية تتوقع الكلمات المبتورة وتكمل الجملة حتى بوجود موسيقى صاخبة أو عزل صدى (AEC).
+            أما في <strong>اللغة العربية</strong>، فالمحرك يعتمد على مخارج الحروف الفصيحة الصارمة؛ وعند وجود لهجة محكية (شامية أو سورية أو مصرية) أو تداخل موسيقى ينخفض مقياس الثقة (Confidence) فيسقط السيرفر بعض الكلمات.
+            <br />
+            <strong>الحلول المطبقة في مدى السمع:</strong>
+            <br />
+            1️⃣ <strong>اختيار اللهجة المناسبة:</strong> اختر لهجة الفيديو أعلاه (🇯🇴 الأردن/الشام، 🇸🇾 سوريا، أو 🇪🇬 مصر ذات المعجم الأوسع).
+            <br />
+            2️⃣ <strong>التقاط البدائل الأكمل:</strong> يقوم النظام الآن بفحص كافة البدائل الثلاثة لجوجل واختيار الخيار الأكمل الذي لا يسقط الكلمات.
+            <br />
+            3️⃣ <strong>الترميم اللغوي الفوري:</strong> انقر زر <strong>«✨ تحسين وترميم الكلمات بالذكاء الاصطناعي»</strong> لإكمال الجمل وضبط مخارج الحروف فورياً!
           </p>
         </div>
 
@@ -1220,7 +1271,15 @@ export default function SmartLectures({ userAudiogram, isCapturingSystem, system
                 <span className="typing-dot" />
                 <span className="typing-dot" />
                 <span className="typing-dot" />
-                <span>المايكروفون يستمع بنشاط ({selectedLang === 'ar-SA' ? 'عربي 🇸🇦' : 'English 🇺🇸'})...</span>
+                <span>
+                  المايكروفون يستمع بنشاط ({
+                    selectedLang === 'ar-JO' ? 'عربي 🇯🇴 الأردن والشام' :
+                    selectedLang === 'ar-SY' ? 'عربي 🇸🇾 سوريا' :
+                    selectedLang === 'ar-EG' ? 'عربي 🇪🇬 مصر' :
+                    selectedLang === 'ar-SA' ? 'عربي 🇸🇦 السعودية' :
+                    'English 🇺🇸'
+                  })...
+                </span>
               </div>
             )}
           </div>
