@@ -6329,7 +6329,7 @@ body {
 
 .player-stage-viewport {
   position: relative;
-  height: 320px;
+  min-height: 440px;
   background: #030611;
   display: flex;
   flex-direction: column;
@@ -7830,6 +7830,536 @@ body {
     display: none;
   }
 }
+
+/* =========================================================================
+   INTERACTIVE VIDEO ACADEMY & SIMULATOR STAGES
+   ========================================================================= */
+.player-top-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-voiceover-pill {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #CBD5E1;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.btn-voiceover-pill:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+.btn-voiceover-pill.active {
+  background: rgba(16, 185, 129, 0.18);
+  border-color: rgba(16, 185, 129, 0.4);
+  color: #6EE7B7;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.25);
+}
+
+.speed-selector-group {
+  display: flex;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  padding: 2px;
+  gap: 2px;
+}
+.btn-speed-pill {
+  background: transparent;
+  border: none;
+  color: #94A3B8;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.btn-speed-pill.active {
+  background: rgba(56, 189, 248, 0.25);
+  color: #38BDF8;
+}
+
+.player-interactive-stage {
+  position: relative;
+  z-index: 3;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+}
+
+/* 1. OS Stage */
+.sim-os-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 520px;
+}
+.os-apps-grid {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.os-app-chip {
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #E2E8F0;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+.os-flow-connector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #38BDF8;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+.flow-pulse-line {
+  width: 70px;
+  height: 2px;
+  background: linear-gradient(90deg, #38BDF8, #00D4AA);
+  box-shadow: 0 0 10px #00D4AA;
+}
+.os-core-card {
+  background: linear-gradient(135deg, rgba(17, 24, 39, 0.95), rgba(8, 12, 26, 0.95));
+  border: 1.5px solid rgba(0, 212, 170, 0.4);
+  border-radius: 14px;
+  padding: 10px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 8px 24px rgba(0, 212, 170, 0.15);
+}
+.core-info strong {
+  display: block;
+  font-size: 0.86rem;
+  color: #FFFFFF;
+}
+.core-info small {
+  color: #94A3B8;
+  font-size: 0.7rem;
+}
+.os-output-badge {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #6EE7B7;
+  padding: 4px 14px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+/* 2. Audiometry Stage */
+.sim-audiometry-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 520px;
+}
+.audio-test-top-tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.tag-freefield {
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  color: #38BDF8;
+  padding: 3px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+.tag-gain {
+  background: rgba(16, 185, 129, 0.18);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #6EE7B7;
+  padding: 3px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+.mini-audiogram-visual {
+  width: 100%;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 10px 14px;
+}
+.audiogram-freqs-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.7rem;
+  color: #94A3B8;
+  font-family: monospace;
+  margin-bottom: 6px;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+  padding-bottom: 3px;
+}
+.audiogram-chart-area {
+  position: relative;
+  height: 65px;
+  background: repeating-linear-gradient(0deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 1px, transparent 1px, transparent 20px);
+  border-radius: 6px;
+}
+.chart-line-before {
+  position: absolute;
+  inset: 38px 10px auto 10px;
+  height: 2px;
+  background: #EF4444;
+  border-radius: 2px;
+  box-shadow: 0 0 8px #EF4444;
+}
+.chart-line-after {
+  position: absolute;
+  inset: 16px 10px auto 10px;
+  height: 2.5px;
+  background: #10B981;
+  border-radius: 2px;
+  box-shadow: 0 0 10px #10B981;
+}
+.chart-marker {
+  position: absolute;
+  font-weight: 900;
+  font-size: 0.85rem;
+  transform: translate(-50%, -50%);
+}
+.marker-r { color: #EF4444; }
+.marker-l { color: #38BDF8; }
+.audio-methods-note {
+  display: flex;
+  gap: 12px;
+  font-size: 0.72rem;
+  color: #CBD5E1;
+  font-weight: 700;
+}
+
+/* 3. Hearing Aid Stage */
+.sim-hearing-aid-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 520px;
+}
+.aid-presets-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.aid-preset-pill {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94A3B8;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+.aid-preset-pill.active {
+  background: rgba(129, 140, 248, 0.2);
+  border-color: #818CF8;
+  color: #C7D2FE;
+  box-shadow: 0 0 12px rgba(129, 140, 248, 0.3);
+}
+.mini-eq-bars {
+  display: flex;
+  gap: 14px;
+  align-items: flex-end;
+  height: 80px;
+}
+.mini-eq-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+.bar-track {
+  width: 14px;
+  height: 60px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+  padding: 2px;
+}
+.bar-fill {
+  width: 100%;
+  background: #818CF8;
+  border-radius: 4px;
+  transition: height 0.3s ease;
+}
+.speech-highlight .bar-fill {
+  background: linear-gradient(180deg, #00D4AA, #38BDF8);
+  box-shadow: 0 0 10px #00D4AA;
+}
+.bar-label {
+  font-size: 0.65rem;
+  color: #94A3B8;
+}
+.bar-val {
+  font-size: 0.65rem;
+  color: #E2E8F0;
+  font-family: monospace;
+  font-weight: 700;
+}
+.clarity-banner {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(0, 212, 170, 0.12);
+  border: 1px solid rgba(0, 212, 170, 0.3);
+  color: #2DD4BF;
+  padding: 3px 12px;
+  border-radius: 20px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+/* 4. Captions Stage */
+.sim-captions-stage {
+  width: 100%;
+  max-width: 520px;
+}
+.mock-window-container {
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+}
+.mock-window-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(0, 0, 0, 0.4);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.mock-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+.mock-dot.red { background: #EF4444; }
+.mock-dot.yellow { background: #F59E0B; }
+.mock-dot.green { background: #10B981; }
+.mock-title {
+  font-size: 0.7rem;
+  color: #94A3B8;
+  margin-right: 8px;
+}
+.mock-captions-content {
+  padding: 12px 16px;
+}
+.sentiment-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.7rem;
+  margin-bottom: 6px;
+}
+.sentiment-tag { color: #FCD34D; font-weight: 700; }
+.acc-tag { color: #A7F3D0; font-family: monospace; font-weight: 700; }
+.typed-text-flow {
+  font-size: 0.85rem;
+  color: #FFFFFF;
+  line-height: 1.5;
+  margin: 0 0 8px 0;
+  border-left: 2px solid #00D4AA;
+  padding-left: 8px;
+}
+.phoneme-tags-row {
+  display: flex;
+  gap: 6px;
+}
+.phoneme-chip {
+  background: rgba(168, 85, 247, 0.15);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  color: #D8B4FE;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+/* 5. Safety Stage */
+.sim-safety-stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 520px;
+}
+.safety-radar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1.5px solid rgba(244, 63, 94, 0.35);
+  border-radius: 14px;
+  padding: 12px 18px;
+  width: 100%;
+}
+.radar-sweep-circle {
+  position: relative;
+  width: 65px;
+  height: 65px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(244, 63, 94, 0.5);
+  background: radial-gradient(circle, rgba(244, 63, 94, 0.2) 0%, transparent 70%);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.radar-scanner-beam {
+  position: absolute;
+  inset: 0;
+  background: conic-gradient(from 0deg, transparent 0deg, rgba(244, 63, 94, 0.6) 60deg, transparent 70deg);
+  animation: radarRotate 2s infinite linear;
+}
+.radar-blip-siren {
+  position: absolute;
+  top: 20%;
+  left: 60%;
+  font-size: 0.9rem;
+}
+.radar-blip-door {
+  position: absolute;
+  bottom: 25%;
+  left: 25%;
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+.safety-alert-card-demo strong {
+  display: block;
+  color: #FDA4AF;
+  font-size: 0.84rem;
+}
+.safety-alert-card-demo p {
+  color: #CBD5E1;
+  font-size: 0.72rem;
+  margin: 2px 0 0 0;
+}
+
+/* 6. Privacy Stage */
+.sim-privacy-stage {
+  width: 100%;
+  max-width: 520px;
+}
+.privacy-card-preview {
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 12px;
+  padding: 14px 18px;
+}
+.privacy-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.privacy-badge-lock {
+  display: flex;
+  align-items: center;
+  color: #6EE7B7;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+.profile-id-tag {
+  color: #94A3B8;
+  font-family: monospace;
+  font-size: 0.7rem;
+}
+.privacy-details-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.detail-item span {
+  display: block;
+  font-size: 0.65rem;
+  color: #94A3B8;
+}
+.detail-item strong {
+  font-size: 0.75rem;
+  color: #FFFFFF;
+}
+.privacy-actions-row {
+  display: flex;
+  gap: 8px;
+}
+.btn-demo-mada-file, .btn-demo-pdf-file {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #E2E8F0;
+  padding: 5px 12px;
+  border-radius: 8px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+}
+.btn-demo-mada-file {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.35);
+  color: #A7F3D0;
+}
+
+/* Meta Footer Actions */
+.btn-jump-try {
+  display: inline-flex;
+  align-items: center;
+  background: linear-gradient(135deg, #0284C7 0%, #00D4AA 100%);
+  border: none;
+  color: #FFFFFF;
+  padding: 10px 20px;
+  border-radius: 12px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 15px rgba(2, 132, 199, 0.3);
+}
+.btn-jump-try:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 212, 170, 0.4);
+}
+.active-badge-pill {
+  border: 1px solid;
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+.playlist-sub {
+  font-size: 0.75rem;
+  color: #94A3B8;
+  margin: 2px 0 0 0;
+}
+
 
 
 
