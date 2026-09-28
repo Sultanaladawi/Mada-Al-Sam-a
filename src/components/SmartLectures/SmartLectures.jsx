@@ -89,7 +89,7 @@ export default function SmartLectures({ userAudiogram, isCapturingSystem, system
 
   // Live Microphone / Lecture & Video Transcriber State
   const [isRecordingLive, setIsRecordingLive] = useState(false);
-  const [selectedLang, setSelectedLang] = useState('ar-SA');
+  const [selectedLang, setSelectedLang] = useState('ar-JO');
   const [micVolume, setMicVolume] = useState(0);
   const [liveTitle, setLiveTitle] = useState('');
   const [liveTranscript, setLiveTranscript] = useState('');
@@ -97,6 +97,8 @@ export default function SmartLectures({ userAudiogram, isCapturingSystem, system
   const [youtubeInputUrl, setYoutubeInputUrl] = useState('');
   const [activeVideoId, setActiveVideoId] = useState(null);
   const isRecordingLiveRef = useRef(false);
+  const liveInterimRef = useRef('');
+  const autoCommitTimerRef = useRef(null);
   const recognitionRef = useRef(null);
   const micAudioCtxRef = useRef(null);
   const micAnalyserRef = useRef(null);
@@ -482,6 +484,21 @@ export default function SmartLectures({ userAudiogram, isCapturingSystem, system
             }
           }
           setLiveInterim(interim);
+          liveInterimRef.current = interim;
+
+          // Auto-commit timer: If speech pauses for 1000ms, commit interim so words are NEVER lost!
+          if (autoCommitTimerRef.current) clearTimeout(autoCommitTimerRef.current);
+          if (interim && interim.trim().length > 4) {
+            autoCommitTimerRef.current = setTimeout(() => {
+              if (liveInterimRef.current && liveInterimRef.current.trim()) {
+                const chunk = liveInterimRef.current.trim();
+                setLiveTranscript(prev => (prev ? prev + ' ' + chunk : chunk));
+                setNewNotes(prev => (prev ? prev + ' ' + chunk : chunk));
+                liveInterimRef.current = '';
+                setLiveInterim('');
+              }
+            }, 1000);
+          }
         };
 
         recognition.onerror = (err) => {
@@ -495,6 +512,16 @@ export default function SmartLectures({ userAudiogram, isCapturingSystem, system
         };
 
         recognition.onend = () => {
+          // Flush any pending interim text immediately so nothing is dropped
+          if (liveInterimRef.current && liveInterimRef.current.trim()) {
+            const chunk = liveInterimRef.current.trim();
+            setLiveTranscript(prev => (prev ? prev + ' ' + chunk : chunk));
+            setNewNotes(prev => (prev ? prev + ' ' + chunk : chunk));
+            liveInterimRef.current = '';
+            setLiveInterim('');
+          }
+          if (autoCommitTimerRef.current) clearTimeout(autoCommitTimerRef.current);
+
           if (isRecordingLiveRef.current) {
             if (restartTimeoutRef.current) clearTimeout(restartTimeoutRef.current);
             restartTimeoutRef.current = setTimeout(() => {
@@ -505,7 +532,7 @@ export default function SmartLectures({ userAudiogram, isCapturingSystem, system
                   console.log('Safe restart note:', e);
                 }
               }
-            }, 350);
+            }, 250);
           } else {
             setIsRecordingLive(false);
             isRecordingLiveRef.current = false;
@@ -905,19 +932,37 @@ export default function SmartLectures({ userAudiogram, isCapturingSystem, system
           </div>
 
           <div className="studio-header-actions">
-            {/* Language Switcher */}
-            <div className="studio-lang-toggle" title="اختيار لغة التعرف الصوتي">
+            {/* Language & Dialect Switcher */}
+            <div className="studio-lang-toggle" title="اختيار لهجة ولغة التفريغ">
+              <button
+                type="button"
+                onClick={() => handleLanguageChange('ar-JO')}
+                className={`lang-btn ${selectedLang === 'ar-JO' ? 'active' : ''}`}
+                title="العربية (الشام والأردن والبرامج الوثائقية)"
+              >
+                🇯🇴 الشام / الأردن
+              </button>
               <button
                 type="button"
                 onClick={() => handleLanguageChange('ar-SA')}
                 className={`lang-btn ${selectedLang === 'ar-SA' ? 'active' : ''}`}
+                title="العربية (الخليج والسعودية)"
               >
-                🇸🇦 العربية
+                🇸🇦 السعودية / الخليج
+              </button>
+              <button
+                type="button"
+                onClick={() => handleLanguageChange('ar-EG')}
+                className={`lang-btn ${selectedLang === 'ar-EG' ? 'active' : ''}`}
+                title="العربية (مصر)"
+              >
+                🇪🇬 مصر
               </button>
               <button
                 type="button"
                 onClick={() => handleLanguageChange('en-US')}
                 className={`lang-btn ${selectedLang === 'en-US' ? 'active' : ''}`}
+                title="English"
               >
                 🇺🇸 English
               </button>
@@ -991,11 +1036,11 @@ export default function SmartLectures({ userAudiogram, isCapturingSystem, system
             <div className="vu-meter-info">
               {micVolume > 14 ? (
                 <span className="vu-status-ok">
-                  🟢 المايكروفون يلتقط الصوت بنشاط ({micVolume}%) — تحدّث الآن أو اجعل صوت الفيديو يخرج من مكبرات الصوت...
+                  🟢 مستوى الصوت ملتقط ({micVolume}%) — المايكروفون يستمع بنشاط ويتم تثبيت الكلمات تلقائياً...
                 </span>
               ) : (
                 <span className="vu-status-low">
-                  ⚠️ مستوى التقاط الصوت منخفض ({micVolume}%) — إذا كنت ترتدي سماعة أذن فالصوت لا يصل للمايك. شغّل الصوت عبر مكبرات اللابتوب أو اضغط زر "🎬 نموذج يوتيوب جاهز" للتجربة فوراً!
+                  ⚠️ مستوى التقاط الصوت منخفض ({micVolume}%) — نصيحة: ارفع صوت سماعات اللابتوب إلى 80%-100% ليتجاوز صوت الكلام الموسيقى التصويرية ويلتقط المايك كامل النص!
                 </span>
               )}
             </div>
