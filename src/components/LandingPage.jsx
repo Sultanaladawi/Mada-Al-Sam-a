@@ -3,12 +3,12 @@ import {
   Activity, Volume2, Sparkles, ShieldAlert, FileText, 
   CheckCircle2, ArrowLeft, ArrowUpRight, Headphones, Heart, 
   Users, GraduationCap, Briefcase, Zap, Play, Pause, RefreshCw, 
-  BarChart2, ShieldCheck, ChevronRight, Sliders, Eye
+  BarChart2, ShieldCheck, ChevronRight, Sliders, Eye, Film 
 } from 'lucide-react';
 import MadaLogo from './MadaLogo';
 import VideoShowcase from './VideoShowcase';
 
-export default function LandingPage({ onViewChange, onOpenDeafGuide }) {
+export default function LandingPage({ onViewChange, onOpenDeafGuide, onOpenLogoMotion }) {
   const [currentCaption, setCurrentCaption] = useState(0);
   const [eqHeights, setEqHeights] = useState([12, 24, 8, 16, 20, 14, 28, 10, 18]);
   const [simMode, setSimMode] = useState('mada'); // 'normal', 'loss', 'mada'
@@ -114,6 +114,10 @@ export default function LandingPage({ onViewChange, onOpenDeafGuide }) {
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
               جرّب لوحة التحكم
             </button>
+            <button onClick={onOpenLogoMotion} className="btn-logo-cinema-hero" title="عرض موشن جرافيك وفيديو الشعار (4K)">
+              <Film className="w-5 h-5 ml-2 text-cyan-400" />
+              فيديو الشعار (4K)
+            </button>
             <a href="#how" className="btn-secondary">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polygon points="10,8 16,12 10,16"/></svg>
               كيف يعمل؟
@@ -167,6 +171,7 @@ export default function LandingPage({ onViewChange, onOpenDeafGuide }) {
       <VideoShowcase 
         onOpenDeafGuide={onOpenDeafGuide} 
         onViewChange={onViewChange} 
+        onOpenLogoMotion={onOpenLogoMotion}
       />
 
       {/* ========== PROBLEM SECTION ========== */}

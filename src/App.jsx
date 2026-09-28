@@ -4,12 +4,14 @@ import Footer from './components/Footer';
 import LandingPage from './components/LandingPage';
 import Dashboard from './components/Dashboard';
 import DeafGuideModal from './components/DeafGuideModal';
+import LogoMotionIntro from './components/LogoMotionIntro';
 
 function App() {
   const [view, setView] = useState('landing');
   const [activeTab, setActiveTab] = useState('overview');
   const [highContrast, setHighContrast] = useState(false);
   const [isDeafGuideOpen, setIsDeafGuideOpen] = useState(false);
+  const [isLogoMotionOpen, setIsLogoMotionOpen] = useState(false);
 
   useEffect(() => {
     const handleHash = () => {
@@ -59,13 +61,15 @@ function App() {
         highContrast={highContrast}
         onToggleContrast={() => setHighContrast(prev => !prev)}
         onOpenDeafGuide={() => setIsDeafGuideOpen(true)}
+        onOpenLogoMotion={() => setIsLogoMotionOpen(true)}
       />
 
       <main className="mada-main-content">
         {view === 'landing' ? (
           <LandingPage 
             onViewChange={handleViewChange}
-            onOpenDeafGuide={() => setIsDeafGuideOpen(true)} 
+            onOpenDeafGuide={() => setIsDeafGuideOpen(true)}
+            onOpenLogoMotion={() => setIsLogoMotionOpen(true)}
           />
         ) : (
           <Dashboard
@@ -73,6 +77,7 @@ function App() {
             onTabChange={setActiveTab}
             onViewChange={handleViewChange}
             onOpenDeafGuide={() => setIsDeafGuideOpen(true)}
+            onOpenLogoMotion={() => setIsLogoMotionOpen(true)}
           />
         )}
       </main>
@@ -83,6 +88,12 @@ function App() {
       <DeafGuideModal 
         isOpen={isDeafGuideOpen} 
         onClose={() => setIsDeafGuideOpen(false)} 
+      />
+
+      {/* Official 4K Logo Motion Cinema & Video Downloader */}
+      <LogoMotionIntro 
+        isOpen={isLogoMotionOpen} 
+        onClose={() => setIsLogoMotionOpen(false)} 
       />
     </div>
   );

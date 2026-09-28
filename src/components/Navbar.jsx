@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   Volume2, Sparkles, Activity, ShieldAlert, BookOpen, LayoutDashboard, 
-  Home, Eye, Menu, X, Globe, ChevronLeft 
+  Home, Eye, Menu, X, Globe, ChevronLeft, Film 
 } from 'lucide-react';
 import MadaLogo from './MadaLogo';
 
@@ -12,7 +12,8 @@ export default function Navbar({
   onTabChange, 
   highContrast, 
   onToggleContrast,
-  onOpenDeafGuide 
+  onOpenDeafGuide,
+  onOpenLogoMotion 
 }) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
@@ -104,6 +105,16 @@ export default function Navbar({
 
           {/* Right Action Controls */}
           <div className="navbar-right-controls">
+            {/* Logo Motion 4K Video Theatre Trigger */}
+            <button
+              onClick={onOpenLogoMotion}
+              className="btn-logo-nav-cinema"
+              title="عرض فيديو وهوية الشعار السينمائية (4K)"
+            >
+              <Film className="w-4 h-4 ml-1.5 text-cyan-400" />
+              <span className="hidden-mobile">فيديو الشعار</span>
+            </button>
+
             {/* Deaf Accessibility & Sign Language Quick Button */}
             <button
               onClick={onOpenDeafGuide}
@@ -234,6 +245,17 @@ export default function Navbar({
               </div>
 
               <div className="drawer-footer-actions">
+                <button
+                  onClick={() => {
+                    setIsDrawerOpen(false);
+                    onOpenLogoMotion();
+                  }}
+                  className="btn-drawer-logo-cinema"
+                >
+                  <Film className="w-5 h-5 ml-2 text-cyan-400" />
+                  <span>فيديو وهوية الشعار السينمائية (4K)</span>
+                </button>
+
                 <button
                   onClick={() => {
                     setIsDrawerOpen(false);

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   Play, Pause, RotateCcw, Volume2, VolumeX, Sparkles, 
   CheckCircle2, BookOpen, Activity, ShieldAlert, Monitor, 
-  ChevronRight, ChevronLeft, ExternalLink, Layers, Eye 
+  ChevronRight, ChevronLeft, ExternalLink, Layers, Eye, Film 
 } from 'lucide-react';
 import MadaLogo from './MadaLogo';
 
@@ -60,7 +60,7 @@ const CHAPTERS = [
   }
 ];
 
-export default function VideoShowcase({ onOpenDeafGuide, onViewChange }) {
+export default function VideoShowcase({ onOpenDeafGuide, onViewChange, onOpenLogoMotion }) {
   const [activeChapterIndex, setActiveChapterIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(25);
@@ -238,6 +238,10 @@ export default function VideoShowcase({ onOpenDeafGuide, onViewChange }) {
                   </div>
 
                   <div className="controls-right">
+                    <button onClick={onOpenLogoMotion} className="btn-logo-motion-helper" title="عرض موشن جرافيك وفيديو الشعار (4K)">
+                      <Film className="w-3.5 h-3.5 ml-1 text-cyan-400" />
+                      <span>فيديو الشعار (4K)</span>
+                    </button>
                     <button onClick={onOpenDeafGuide} className="btn-deaf-helper" title="فتح الشرح بلغة الإشارة">
                       <span>🤟 شرح لغة الإشارة</span>
                     </button>
@@ -303,6 +307,18 @@ export default function VideoShowcase({ onOpenDeafGuide, onViewChange }) {
                   </div>
                 );
               })}
+            </div>
+
+            {/* Logo Motion 4K Cinema Callout */}
+            <div className="logo-cinema-callout" onClick={onOpenLogoMotion}>
+              <div className="callout-icon-film">
+                <Film className="w-5 h-5 text-cyan-400" />
+              </div>
+              <div className="callout-text">
+                <strong>فيديو وأنيميشن الشعار الرسمي (4K)</strong>
+                <p>شاهد رمزية القوقعة والترددات مع خيار تحميل الفيديو لجهازك بنقرة واحدة.</p>
+              </div>
+              <Sparkles className="w-4 h-4 text-cyan-400 mr-auto" />
             </div>
 
             {/* Quick Deaf Mode Access Banner */}
