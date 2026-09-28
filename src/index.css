@@ -6091,6 +6091,33 @@ body {
   font-weight: 800;
   white-space: nowrap;
 }
+.studio-footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn-ai-polish {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.2) 0%, rgba(99, 102, 241, 0.25) 100%);
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  color: #C084FC;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+}
+
+.btn-ai-polish:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.35) 0%, rgba(99, 102, 241, 0.4) 100%);
+  color: #FFFFFF;
+  border-color: #C084FC;
+  transform: translateY(-1px);
+}
 
 .btn-studio-clear {
   background: rgba(255, 255, 255, 0.06);
